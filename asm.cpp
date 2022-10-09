@@ -23,12 +23,12 @@ int main (int argc, char *argv[])
 
     err = SetCmds (&txt, &commands);
     if (err != OK) return err;
-printf("ok");
+
     FreeText (&txt);
 
     err = WriteCmds (output_file_name, commands);
     if (err != OK) return err;
-printf("ok");
+
     free (commands);
 
     return 0;
@@ -124,15 +124,12 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
     if (txt ->  lines == nullptr) return NULLPTR_ARG;
     if (cmds_p        == nullptr) return NULLPTR_ARG;
 
-    int cmds_in_arg = ARG_SIZE / CMD_SIZE;         //???
-    if (cmds_in_arg * CMD_SIZE < ARG_SIZE) cmds_in_arg++; //???
-
-    size_t size = (cmds_in_arg + 1) * CMD_SIZE * txt -> len + INFO_SIZE; 
+    size_t size = (MAX_NUM_OF_ARGS * ARG_SIZE + CMD_SIZE) * txt -> len + INFO_SIZE; 
 
     *cmds_p = (cmd_t *) (calloc (1, size));
 
     cmd_t *cmds = *cmds_p;
-    
+
     if (cmds == nullptr) return ALLOC_ERROR;
 
     cmds [0] = SIGNATURE;
@@ -158,15 +155,17 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
             need_arg = 1;
             *(cmd_ptr++) = PUSH; 
         }
-        else if (stricmp (cmd,  "POP") == 0) *(cmd_ptr++) = POP;
+        else if (stricmp (cmd,  "POP") == 0)
+        {
+            need_arg = 1;
+            *(cmd_ptr++) = POP;
+        }
         else if (stricmp (cmd,   "IN") == 0) *(cmd_ptr++) = IN;
         else if (stricmp (cmd,  "OUT") == 0) *(cmd_ptr++) = OUT;
         else if (stricmp (cmd,  "ADD") == 0) *(cmd_ptr++) = ADD;
         else if (stricmp (cmd,  "SUB") == 0) *(cmd_ptr++) = SUB;
         else if (stricmp (cmd,  "MUL") == 0) *(cmd_ptr++) = MUL;
         else if (stricmp (cmd,  "DIV") == 0) *(cmd_ptr++) = DIV;
-        else if (stricmp (cmd,  "POW") == 0) *(cmd_ptr++) = POW;
-        else if (stricmp (cmd,  "ABS") == 0) *(cmd_ptr++) = ABS;
         else if (stricmp (cmd,  "HLT") == 0) *(cmd_ptr++) = HLT;
         else
         {
@@ -179,7 +178,7 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
 
         arg_t arg = 0;
 
-        if (sscanf (txt -> lines[line] + symbs_read, "%lf", &arg) != 1)
+        if (sscanf (txt -> lines[line] + symbs_read, "%d", &arg) != 1)
         {
             //dump
             printf ("comp error\n");
@@ -188,8 +187,7 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
 
         * ((arg_t *) cmd_ptr) = arg;
 
-        //cmd_ptr = (cmd_t *) (((arg_t *) cmd_ptr) + 1);
-        cmd_ptr += cmds_in_arg;
+        cmd_ptr = (cmd_t *) (((arg_t *) cmd_ptr) + 1);
     }
 
     cmds[2] = cmd_ptr - cmds;
