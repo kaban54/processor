@@ -1,7 +1,7 @@
-PUSH 10
-PUSH 20
+push 10
+push 20
 ADD
-PUSH 0
-DIV
+push [1025]
+mul
 OUT
 HLT

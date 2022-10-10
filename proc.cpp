@@ -69,6 +69,7 @@ size_t GetSize (FILE *inp_file)
     return stat_buf.st_size;
 }
 
+
 int InfoCheck (Cpu_t *cpu)
 {
     if (cpu == nullptr) return NULLPTR_ARG;
@@ -80,6 +81,7 @@ int InfoCheck (Cpu_t *cpu)
     return OK;
 }
 
+
 int RunCode (Cpu_t *cpu)
 {
     if (cpu         == nullptr) return NULLPTR_ARG;
@@ -90,7 +92,9 @@ int RunCode (Cpu_t *cpu)
 
     while (1)
     {
-        switch (cpu -> code [(cpu -> ip)++])
+        cmd_t cmd = (cpu -> code [(cpu -> ip)++]);
+
+        switch (cmd & CMD_MASK)
         {
             case HLT:
             {
@@ -99,8 +103,22 @@ int RunCode (Cpu_t *cpu)
             case PUSH:
             {
                 arg_t arg = 0;
-                arg = cpu -> code [(cpu -> ip)++];
+                if (cmd & ARG_REG) 
+                {
+                    int reg = cpu -> code [(cpu -> ip)++];
+                    if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
+                    arg += cpu -> regs [reg];
+                }
+                if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
+
+                if (cmd & ARG_MEM)
+                {
+                    if (arg >= RAM_SIZE) return INCORRECT_RAM_ADRESS;
+                    arg = cpu -> ram [arg];
+                }
+
                 StackPush (&(cpu -> stk), arg);
+                
                 break;
             }
             case ADD:
@@ -192,14 +210,20 @@ int RunCode (Cpu_t *cpu)
 
 }
 
+
 void FreeCpu (Cpu_t *cpu)
 {
     if (cpu == nullptr) return;
 
     free (cpu -> code - 3);
+    
     cpu -> ip = 0;
     cpu -> code_size = 0;
+
     StackDtor (&(cpu -> stk));
+
+    memset ((void *) (cpu -> regs), 0, sizeof (cpu -> regs [0]) * NUM_OF_REGS);
+    memset ((void *) (cpu -> ram ), 0, sizeof (cpu -> ram  [0]) * RAM_SIZE);
 }
 
 
@@ -213,6 +237,7 @@ int ScanArg (arg_t *arg)
 {
     return scanf ("%d", arg);
 }
+
 
 void CpuErr (Cpu_t *cpu, int err, FILE *stream)
 {
@@ -232,6 +257,8 @@ void CpuErr (Cpu_t *cpu, int err, FILE *stream)
              if (err == EMPTY_STACK)          fprintf (stream, "Cannot get a value from stack.\n");
         else if (err == DIV_BY_ZERO)          fprintf (stream, "Division by zero.\n");
         else if (err == UNKNOWN_CMD)          fprintf (stream, "Unknown command.\n");
+        else if (err == INCORRECT_REG)        fprintf (stream, "Incorrect register name.\n");
+        else if (err == INCORRECT_RAM_ADRESS) fprintf (stream, "Incorrect RAM adress.\n");
     }
 }
 
@@ -241,10 +268,10 @@ void PrintCode (Cpu_t *cpu, FILE *stream)
     int right = left + 11 < cpu -> code_size ? left + 11 : cpu -> code_size;
 
     fprintf (stream, "IP:   ");
-    for (int index = left; index < right; index ++) fprintf (stream, " %03d ", index);
+    for (int index = left; index < right; index ++) fprintf (stream, " %04d ", index);
     fprintf (stream, "\nCMD:  ");
-    for (int index = left; index < right; index ++) fprintf (stream, " %03d ", cpu -> code [index]);
+    for (int index = left; index < right; index ++) fprintf (stream, " %04X ", cpu -> code [index]);
     fprintf (stream, "\n"      );
-    for (int index = left; index < right; index ++) fprintf (stream, index == cpu -> ip ? "  ^  " : "     " );
+    for (int index = left; index < right; index ++) fprintf (stream, index == cpu -> ip ? "   ^  " : "      " );
     fprintf (stream, "\n");
 }

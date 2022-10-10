@@ -19,19 +19,19 @@ int main (int argc, char *argv[])
     int err = OK;
 
     err = ReadText (input_file_name, &txt);
-    if (err != OK) return err;
+    if (err) return err;
 
     err = SetCmds (&txt, &commands);
-    if (err != OK) return err;
+    if (err) return err;
 
     FreeText (&txt);
 
     err = WriteCmds (output_file_name, commands);
-    if (err != OK) return err;
+    if (err) return err;
 
     free (commands);
 
-    return 0;
+    return OK;
 }
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -137,11 +137,10 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
 
     int *cmd_ptr = cmds + 3;
 
-    char cmd [CMD_LEN] = "";
-
     for (size_t line = 0; line < txt -> len; line++)
     {
         int symbs_read = 0;
+        char cmd [BUFLEN] = "";
 
         sscanf (txt -> lines [line], "%s%n", cmd, &symbs_read);
 
@@ -149,50 +148,135 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
 
         int need_arg = 0;
 
-
         if      (stricmp (cmd, "PUSH") == 0)
         {
             need_arg = 1;
-            *(cmd_ptr++) = PUSH; 
+            *(cmd_ptr++) |= PUSH; 
         }
         else if (stricmp (cmd,  "POP") == 0)
         {
             need_arg = 1;
-            *(cmd_ptr++) = POP;
+            *(cmd_ptr++) |= POP;
         }
-        else if (stricmp (cmd,   "IN") == 0) *(cmd_ptr++) = IN;
-        else if (stricmp (cmd,  "OUT") == 0) *(cmd_ptr++) = OUT;
-        else if (stricmp (cmd,  "ADD") == 0) *(cmd_ptr++) = ADD;
-        else if (stricmp (cmd,  "SUB") == 0) *(cmd_ptr++) = SUB;
-        else if (stricmp (cmd,  "MUL") == 0) *(cmd_ptr++) = MUL;
-        else if (stricmp (cmd,  "DIV") == 0) *(cmd_ptr++) = DIV;
-        else if (stricmp (cmd,  "HLT") == 0) *(cmd_ptr++) = HLT;
+        else if (stricmp (cmd,   "IN") == 0) *(cmd_ptr++) |= IN;
+        else if (stricmp (cmd,  "OUT") == 0) *(cmd_ptr++) |= OUT;
+        else if (stricmp (cmd,  "ADD") == 0) *(cmd_ptr++) |= ADD;
+        else if (stricmp (cmd,  "SUB") == 0) *(cmd_ptr++) |= SUB;
+        else if (stricmp (cmd,  "MUL") == 0) *(cmd_ptr++) |= MUL;
+        else if (stricmp (cmd,  "DIV") == 0) *(cmd_ptr++) |= DIV;
+        else if (stricmp (cmd,  "HLT") == 0) *(cmd_ptr++) |= HLT;
         else
         {
-            //dump
-            printf ("comp error\n");
+            fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
             return COMP_ERROR;
         }
 
-        if (need_arg == 0) continue;
+        if (!need_arg) continue;
 
-        arg_t arg = 0;
-
-        if (sscanf (txt -> lines[line] + symbs_read, "%d", &arg) != 1)
-        {
-            //dump
-            printf ("comp error\n");
-            return COMP_ERROR;
-        }
-
-        * ((arg_t *) cmd_ptr) = arg;
-
-        cmd_ptr = (cmd_t *) (((arg_t *) cmd_ptr) + 1);
+        if (GetArgs (txt -> lines [line] + symbs_read, &cmd_ptr, line)) return COMP_ERROR;
     }
 
     cmds[2] = cmd_ptr - cmds;
 
     return OK;
+}
+
+int GetArgs (char *args, cmd_t **cmd_ptr_p, size_t line)
+{
+    cmd_t *cmd_ptr = *cmd_ptr_p;
+
+    args = DeleteSpaces (args);
+
+    if (*args == '\0')
+    {
+        fprintf (ERROR_STREAM, "Compilation error:\nmissing argument at line (%Iu)\n", line + 1);
+        return COMP_ERROR;
+    }
+
+    size_t len = strlen (args);
+
+    if (strchr (args, '['))
+    {
+        if (strchr (args, ']') != args + len - 1 || strchr (args + 1, '['))
+        {
+            fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
+            return COMP_ERROR;
+        }
+
+        args [len - 1] = '\0';
+        args++;
+        len -= 2;
+
+        *(cmd_ptr - 1) |= ARG_MEM;
+    }
+    
+    char *arg1 = args;
+    char *arg2 = strchr (args, '+');
+
+    int got_im  = 0;
+    int got_reg = 0;
+
+    if (arg2)
+    {
+        *(arg2++) = '\0';
+        arg2 = DeleteSpaces (arg2);
+
+        if (arg2 [0] == 'r' && strlen (arg2) == 3 && arg2 [2] == 'x')
+        {
+            *(cmd_ptr++) = arg2 [1] - 'a' + 1;
+            got_reg = 1;
+        }
+        else if (isdigit (arg2 [0]))
+        {
+            sscanf (arg2, "%d", cmd_ptr + 1);
+            got_im = 1;
+        }
+        else
+        {
+            fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
+            return COMP_ERROR;
+        }
+    }
+
+    arg1 = DeleteSpaces (arg1);
+
+    if (!got_reg && arg1 [0] == 'r' && strlen (arg1) == 3 && arg1 [2] == 'x')
+    {
+        *(cmd_ptr++) = arg1 [1] - 'a' + 1;
+        got_reg = 1;
+        if (got_im) cmd_ptr++;
+    }
+    else if (!got_im && isdigit (arg1 [0]))
+    {
+        sscanf (arg1, "%d", cmd_ptr++);
+        got_im = 1;
+    }
+    else
+    {
+        fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
+        return COMP_ERROR;
+    }
+
+    if (arg2) *(cmd_ptr - 3) |= ARG_IM | ARG_REG;
+    else      *(cmd_ptr - 2) |= got_im ? ARG_IM : ARG_REG;
+
+    *cmd_ptr_p = cmd_ptr;
+
+    return OK;
+}
+
+char *DeleteSpaces (char *str)
+{
+    if (str == nullptr) return nullptr;
+
+    while (isspace (*str)) str++;
+
+    size_t len = strlen (str);
+
+    while (isspace (str [len - 1]) && len > 0) len--;
+    str [len] = '\0';
+
+    return str;
 }
 
 int WriteCmds (const char *output_file_name, cmd_t *cmds)
