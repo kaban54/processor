@@ -141,3 +141,44 @@ DEF_CMD (JMP, 10, 1,
 
     cpu -> ip = arg;
 })
+
+#define DEF_JMP(name, num ,op)                              \
+DEF_CMD (name, num, 1,                                      \
+{                                                           \
+    int x1 = 0, x2 = 0;                                     \
+    int err = OK;                                           \
+                                                            \
+    err |= StackPop (&(cpu -> stk), &x1);                   \
+    err |= StackPop (&(cpu -> stk), &x2);                   \
+                                                            \
+    if (err) return EMPTY_STACK;                            \
+                                                            \
+    if (!(x2 op x1))                                        \
+    {                                                       \
+        cpu -> ip ++;                                       \
+        break;                                              \
+    }                                                       \
+                                                            \
+    arg_t arg = 0;                                          \
+                                                            \
+    err |= GetArgs (cpu, cmd, &arg);                        \
+    if (err) return err;                                    \
+                                                            \
+    if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;   \
+                                                            \
+    cpu -> ip = arg;                                        \
+})
+
+DEF_JMP (JA , 11,  >)
+
+DEF_JMP (JAE, 12, >=)
+
+DEF_JMP (JB , 13,  <)
+
+DEF_JMP (JBE, 14, <=)
+
+DEF_JMP (JE , 15, ==)
+
+DEF_JMP (JNE, 16, !=)
+
+#undef DEF_JMP

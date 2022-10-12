@@ -1,6 +1,15 @@
 #include "proc.h"
 
 
+#define Ret_if_err(func)                    \
+    err = func;                             \
+    if (err)                                \
+    {                                       \
+        CpuErr (&cpu, err, ERROR_STREAM);   \
+        return err;                         \
+    }
+
+
 int main (int argc, char *argv[])
 {    
     const char *input_file_name = nullptr;
@@ -11,26 +20,11 @@ int main (int argc, char *argv[])
     struct Cpu_t cpu = {};
     int err = OK;
 
-    err = ReadCode (input_file_name, &cpu);
-    if (err)
-    {
-        CpuErr (&cpu, err, ERROR_STREAM);
-        return err;
-    }
+    Ret_if_err (ReadCode (input_file_name, &cpu));
 
-    err = InfoCheck (&cpu);
-    if (err)
-    {
-        CpuErr (&cpu, err, ERROR_STREAM);
-        return err;
-    }
+    Ret_if_err (InfoCheck (&cpu));
 
-    err = RunCode (&cpu);
-    if (err)
-    {
-        CpuErr (&cpu, err, ERROR_STREAM);
-        return err;
-    }
+    Ret_if_err (RunCode (&cpu));
 
     FreeCpu (&cpu);
 
@@ -179,6 +173,7 @@ void CpuErr (Cpu_t *cpu, int err, FILE *stream)
     fprintf (stream, "ERROR: %d\n", err);
 
     if (cpu == nullptr || err == NULLPTR_ARG) fprintf (stream, "Nullptr error.\n");
+    else if (err == OK)                       fprintf (stream, "OK.\n"); 
     else if (err == FOPEN_ERROR)              fprintf (stream, "Cannot open the file.\n");
     else if (err == ALLOC_ERROR)              fprintf (stream, "Cannot allocate memory.\n");
     else if (err == WRONG_SIGNATURE)          fprintf (stream, "Code file has wrong signature.\n");

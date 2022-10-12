@@ -1,6 +1,15 @@
 #include "proc.h"
 
 
+#define Ret_if_err(func)                    \
+    err = func;                             \
+    if (err)                                \
+    {                                       \
+        AsmErr (err, ERROR_STREAM);         \
+        return err;                         \
+    }
+
+
 int main (int argc, char *argv[])
 {
     const char * input_file_name = nullptr;
@@ -18,16 +27,13 @@ int main (int argc, char *argv[])
 
     int err = OK;
 
-    err = ReadText (input_file_name, &txt);
-    if (err) return err;
+    Ret_if_err (ReadText (input_file_name, &txt));
 
-    err = SetCmds (&txt, &commands);
-    if (err) return err;
+    Ret_if_err (Compile (&txt, &commands));
 
     FreeText (&txt);
 
-    err = WriteCmds (output_file_name, commands);
-    if (err) return err;
+    Ret_if_err (WriteCmds (output_file_name, commands));
 
     free (commands);
 
@@ -117,7 +123,7 @@ void FreeText (struct Text *txt)
 
 //---------------------------------------------------------------------------------------------------------------------
 
-int SetCmds (struct Text *txt, cmd_t **cmds_p)
+int Compile (struct Text *txt, cmd_t **cmds_p)
 {
     if (txt           == nullptr) return NULLPTR_ARG;
     if (txt -> buffer == nullptr) return NULLPTR_ARG;
@@ -158,7 +164,7 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
 
 #undef DEF_CMD
 
-        /* else */
+    /* else */
         {
             fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
             return COMP_ERROR;
@@ -276,9 +282,21 @@ int WriteCmds (const char *output_file_name, cmd_t *cmds)
     FILE *out_file = fopen (output_file_name, "wb");
     if (out_file == nullptr) return FOPEN_ERROR;
 
-    if (fwrite ((void *) cmds, CMD_SIZE, cmds [2] + CODE_SHIFT, out_file) != cmds [2]) return FWRITE_ERROR;
+    if (fwrite ((void *) cmds, CMD_SIZE, cmds [2] + CODE_SHIFT, out_file) != cmds [2] + CODE_SHIFT) return FWRITE_ERROR;
 
     fclose (out_file);
 
     return OK;
+}
+
+void AsmErr (int err, FILE *stream)
+{
+    fprintf (stream, "ERROR: %d\n", err);
+    
+         if (err == OK)          fprintf (stream, "OK.\n");
+    else if (err == NULLPTR_ARG) fprintf (stream, "Nullptr error");
+    else if (err == FOPEN_ERROR) fprintf (stream, "Cannot open the file.\n");
+    else if (err == ALLOC_ERROR) fprintf (stream, "Cannot allocate memory.\n");
+    else if (err ==  COMP_ERROR) fprintf (stream, "Compilation error.\n");
+    else                         fprintf (stream, "Unknown error.\n");
 }

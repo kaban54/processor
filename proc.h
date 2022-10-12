@@ -14,7 +14,7 @@ typedef arg_t Elem_t;
 #include "stack.h"
 
 
-const int VERSION = 7;
+const int VERSION = 9;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -54,6 +54,11 @@ struct Cpu_t
     arg_t ram  [RAM_SIZE];
 };
 
+struct Label
+{
+    char *name;
+    int ip;
+};
 
 enum REGISTERS
 {
@@ -113,13 +118,15 @@ void FreeText (struct Text *txt);
 
 int SetLines (struct Text *txt);
 
-int SetCmds (struct Text *txt, cmd_t **cmds_p);
+int Compile (struct Text *txt, cmd_t **cmds_p);
 
 int WriteCmds (const char *output_file_name, cmd_t *cmds);
 
 int PutArgs (char *args, cmd_t **cmd_ptr_p, size_t line);
 
 char *DeleteSpaces (char *str);
+
+void AsmErr (int err, FILE *stream);
 
 //---------------------------------------------------------------------------------------------------------------------
 // proc funcs ---------------------------------------------------------------------------------------------------------
