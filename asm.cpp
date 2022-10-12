@@ -146,24 +146,19 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
 
         if (stricmp (cmd, "") == 0) continue;
 
-        if      (stricmp (cmd, "PUSH") == 0)
-        {   
-            *(cmd_ptr++) |= CMD_PUSH;
-            if (GetArgs (txt -> lines [line] + symbs_read, &cmd_ptr, line)) return COMP_ERROR; 
-        }
-        else if (stricmp (cmd,  "POP") == 0)
-        {
-            *(cmd_ptr++) |= CMD_POP;
-            if (GetArgs (txt -> lines [line] + symbs_read, &cmd_ptr, line)) return COMP_ERROR;
-        }
-        else if (stricmp (cmd,   "IN") == 0) *(cmd_ptr++) |= CMD_IN;
-        else if (stricmp (cmd,  "OUT") == 0) *(cmd_ptr++) |= CMD_OUT;
-        else if (stricmp (cmd,  "ADD") == 0) *(cmd_ptr++) |= CMD_ADD;
-        else if (stricmp (cmd,  "SUB") == 0) *(cmd_ptr++) |= CMD_SUB;
-        else if (stricmp (cmd,  "MUL") == 0) *(cmd_ptr++) |= CMD_MUL;
-        else if (stricmp (cmd,  "DIV") == 0) *(cmd_ptr++) |= CMD_DIV;
-        else if (stricmp (cmd,  "HLT") == 0) *(cmd_ptr++) |= CMD_HLT;
-        else
+#define DEF_CMD(name, num, arg, ...)                                                                \
+    if (stricmp (cmd, #name) == 0)                                                                  \
+    {                                                                                               \
+        *(cmd_ptr++) |= CMD_##name;                                                                 \
+        if (arg) if (GetArgs (txt -> lines [line] + symbs_read, &cmd_ptr, line)) return COMP_ERROR; \
+    }                                                                                               \
+    else         
+        
+        #include "cmd.h"
+
+#undef DEF_CMD
+
+        /* else */
         {
             fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
             return COMP_ERROR;

@@ -14,7 +14,7 @@ typedef arg_t Elem_t;
 #include "stack.h"
 
 
-const int VERSION = 4;
+const int VERSION = 5;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -80,18 +80,16 @@ enum ERRORS
     INCORRECT_ARG_TYPE   = 14,
 };
 
+
+#define DEF_CMD(name, num, arg, ...) CMD_##name = num,
+
 enum CMDS
 {
-    CMD_HLT  =  0,
-    CMD_PUSH =  1,
-    CMD_POP  =  2,
-    CMD_IN   =  3,
-    CMD_OUT  =  4,
-    CMD_ADD  =  5,
-    CMD_SUB  =  6,
-    CMD_MUL  =  7,
-    CMD_DIV  =  8,
+    #include "cmd.h"
 };
+
+#undef DEF_CMD
+
 
 enum ARG_TYPES
 {
@@ -138,6 +136,8 @@ int ScanArg (arg_t *arg);
 void CpuErr (Cpu_t *cpu, int err, FILE *stream);
 
 void PrintCode (Cpu_t *cpu, FILE *stream);
+
+void PrintRegs (Cpu_t *cpu, FILE *stream);
 //---------------------------------------------------------------------------------------------------------------------
 
 #endif

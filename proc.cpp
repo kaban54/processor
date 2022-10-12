@@ -94,154 +94,26 @@ int RunCode (Cpu_t *cpu)
     {
         cmd_t cmd = (cpu -> code [(cpu -> ip)++]);
 
+#define DEF_CMD(name, num, arg, ...)  \
+    case CMD_##name:                  \
+    {                                 \
+        __VA_ARGS__                   \
+        break;                        \
+    }
+
         switch (cmd & CMD_MASK)
         {
-            case CMD_HLT:
-            {
-                return OK;
-            }
-            case CMD_PUSH:
-            {
-                arg_t arg = 0;
-                if (cmd & ARG_REG) 
-                {
-                    int reg = cpu -> code [(cpu -> ip)++];
-                    if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
-                    arg += cpu -> regs [reg];
-                }
 
-                if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
+            #include "cmd.h"
 
-                if (cmd & ARG_MEM)
-                {
-                    if (arg >= RAM_SIZE) return INCORRECT_RAM_ADRESS;
-                    arg = cpu -> ram [arg];
-                }
-
-                StackPush (&(cpu -> stk), arg);
-                
-                break;
-            }
-            case CMD_POP:
-            {
-                if (cmd & ARG_IM && !(cmd & ARG_MEM)) return INCORRECT_ARG_TYPE;
-                
-                arg_t *val_ptr = nullptr;
-                
-                if (cmd & ARG_MEM)
-                {   
-                    arg_t arg = 0;
-
-                    if (cmd & ARG_REG)
-                    {
-                        int reg = cpu -> code [(cpu -> ip)++];
-                        if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
-                        arg += cpu -> regs [reg];
-                    }
-
-                    if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
-
-                    if (arg >= RAM_SIZE) return INCORRECT_RAM_ADRESS;
-
-                    val_ptr = cpu -> ram + arg;
-                }
-                else
-                {
-                    int reg = cpu -> code [(cpu -> ip)++];
-                    if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
-                    
-                    val_ptr = cpu -> regs + reg;
-                }   
-
-                if ( StackPop (&(cpu -> stk), val_ptr) ) return EMPTY_STACK;
-
-                break;
-            }
-            case CMD_ADD:
-            {
-                int x1 = 0, x2 = 0;
-                int err = OK;
-
-                err |= StackPop (&(cpu -> stk), &x1);
-                err |= StackPop (&(cpu -> stk), &x2);
-
-                if (err) return EMPTY_STACK;
-
-                StackPush (&(cpu -> stk), x1 + x2);
-
-                break;
-            }
-            case CMD_MUL:
-            {
-                int x1 = 0, x2 = 0;
-                int err = OK;
-
-                err |= StackPop (&(cpu -> stk), &x1);
-                err |= StackPop (&(cpu -> stk), &x2);
-
-                if (err) return EMPTY_STACK;
-
-                StackPush (&(cpu -> stk), x1 * x2);
-
-                break;
-            }
-            case CMD_SUB:
-            {
-                int x1 = 0, x2 = 0;
-                int err = OK;
-
-                err |= StackPop (&(cpu -> stk), &x1);
-                err |= StackPop (&(cpu -> stk), &x2);
-
-                if (err) return EMPTY_STACK;
-
-                StackPush (&(cpu -> stk), x2 - x1);
-
-                break;
-            }
-            case CMD_DIV:
-            {
-                arg_t x1 = 0, x2 = 0;
-                int err = OK;
-
-                err |= StackPop (&(cpu -> stk), &x1);
-                err |= StackPop (&(cpu -> stk), &x2);
-
-                if (err)     return EMPTY_STACK;
-                if (x1 == 0) return DIV_BY_ZERO;
-
-                StackPush (&(cpu -> stk), x2 / x1);
-
-                break;
-            }
-            case CMD_OUT:
-            {
-                arg_t val = 0;
-                int err = OK;
-
-                err |= StackPop (&(cpu -> stk), &val);
-
-                if (err) return EMPTY_STACK;
-
-                PrintArg (val);
-
-                break;
-            }
-            case CMD_IN:
-            {
-                arg_t val = 0;
-
-                ScanArg (&val);
-
-                StackPush (&(cpu -> stk), val);
-
-                break;
-            }
             default:
             {
                 return UNKNOWN_CMD;
             }
         }
+
+#undef DEF_CMD
+
     }
 
 }
@@ -296,11 +168,14 @@ void CpuErr (Cpu_t *cpu, int err, FILE *stream)
         else if (err == INCORRECT_REG)        fprintf (stream, "Incorrect register name.\n");
         else if (err == INCORRECT_RAM_ADRESS) fprintf (stream, "Incorrect RAM adress.\n");
         else if (err == INCORRECT_ARG_TYPE)   fprintf (stream, "Incorrect argument type.\n");
+        else                                  fprintf (stream, "Unknown error.\n");
     }
 }
 
 void PrintCode (Cpu_t *cpu, FILE *stream)
 {
+    if (cpu == nullptr || stream == nullptr) return;
+
     int  left = cpu -> ip > 5 ? cpu -> ip - 5 : 0;
     int right = left + 11 < cpu -> code_size ? left + 11 : cpu -> code_size;
 
@@ -311,4 +186,14 @@ void PrintCode (Cpu_t *cpu, FILE *stream)
     fprintf (stream, "\n"      );
     for (int index = left; index < right; index ++) fprintf (stream, index == cpu -> ip ? "   ^  " : "      " );
     fprintf (stream, "\n");
+}
+
+void PrintRegs (Cpu_t *cpu, FILE *stream)
+{
+    if (cpu == nullptr || stream == nullptr) return;
+ 
+    fprintf (stream, "Registers:\n");
+
+    for (size_t reg = 1; reg < NUM_OF_REGS; reg++)
+        fprintf (stream, "    r%cx = %d\n", 'a' - 1 + reg, cpu -> regs [reg]);
 }
