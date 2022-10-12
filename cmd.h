@@ -6,22 +6,11 @@ DEF_CMD (HLT, 0, 0,
 DEF_CMD (PUSH, 1, 1,
 {
     arg_t arg = 0;
-        if (cmd & ARG_REG) 
-            {
-                int reg = cpu -> code [(cpu -> ip)++];
-                if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
-                arg += cpu -> regs [reg];
-            }
 
-            if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
+    int err = GetArgs (cpu, cmd, &arg);
+    if (err) return err;
 
-            if (cmd & ARG_MEM)
-            {
-                if (arg >= RAM_SIZE) return INCORRECT_RAM_ADRESS;
-                arg = cpu -> ram [arg];
-            }
-
-            StackPush (&(cpu -> stk), arg);
+    StackPush (&(cpu -> stk), arg);
 })
 
 DEF_CMD (POP, 2, 1,
@@ -140,13 +129,15 @@ DEF_CMD (DUMP, 9, 0,
     PrintRegs (cpu, stdout);
     printf ("\n");
 })
-/*
+
 DEF_CMD (JMP, 10, 1,
 {
-    int new_ip = cpu -> code [(cpu -> ip)++]; 
-    
-    if (new_ip >= cpu -> code_size)
+    arg_t arg = 0;
 
-    cpu -> ip = new_ip;
+    int err = GetArgs (cpu, cmd, &arg);
+    if (err) return err;
 
-})*/
+    if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;
+
+    cpu -> ip = arg;
+})

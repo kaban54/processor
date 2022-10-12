@@ -14,7 +14,7 @@ typedef arg_t Elem_t;
 #include "stack.h"
 
 
-const int VERSION = 6;
+const int VERSION = 7;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -80,6 +80,7 @@ enum ERRORS
     INCORRECT_REG        = 12,
     INCORRECT_RAM_ADRESS = 13,
     INCORRECT_ARG_TYPE   = 14,
+    INCORRECT_JMP_IP     = 15,
 };
 
 
@@ -116,7 +117,7 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p);
 
 int WriteCmds (const char *output_file_name, cmd_t *cmds);
 
-int GetArgs (char *args, cmd_t **cmd_ptr_p, size_t line);
+int PutArgs (char *args, cmd_t **cmd_ptr_p, size_t line);
 
 char *DeleteSpaces (char *str);
 
@@ -128,6 +129,8 @@ int ReadCode (const char *input_file_name, Cpu_t *cpu);
 int InfoCheck (Cpu_t *cpu);
 
 int RunCode (Cpu_t *cpu);
+
+int GetArgs (Cpu_t *cpu, cmd_t cmd, arg_t *arg);
 
 void FreeCpu (Cpu_t *cpu);
 

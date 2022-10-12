@@ -76,7 +76,7 @@ int InfoCheck (Cpu_t *cpu)
 
     if (cpu -> code [-3] != SIGNATURE)        return WRONG_SIGNATURE;
     if (cpu -> code [-2] != VERSION)          return WRONG_VERSION;
-    if (cpu -> code [-1] != cpu -> code_size) return WRONG_CODESIZE; 
+    if (cpu -> code [-1] != cpu -> code_size) return WRONG_CODESIZE;
     
     return OK;
 }
@@ -116,6 +116,33 @@ int RunCode (Cpu_t *cpu)
 
     }
 
+}
+
+int GetArgs (Cpu_t *cpu, cmd_t cmd, arg_t *arg_p)
+{
+    if (cpu   == nullptr) return NULLPTR_ARG;
+    if (arg_p == nullptr) return NULLPTR_ARG;
+
+    arg_t arg = 0;
+
+    if (cmd & ARG_REG) 
+    {
+        int reg = cpu -> code [(cpu -> ip)++];
+        if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
+        arg += cpu -> regs [reg];
+    }
+
+    if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
+
+    if (cmd & ARG_MEM)
+    {
+        if (arg >= RAM_SIZE) return INCORRECT_RAM_ADRESS;
+        arg = cpu -> ram [arg];
+    }
+    
+    *arg_p = arg;
+
+    return OK;
 }
 
 
@@ -168,6 +195,7 @@ void CpuErr (Cpu_t *cpu, int err, FILE *stream)
         else if (err == INCORRECT_REG)        fprintf (stream, "Incorrect register name.\n");
         else if (err == INCORRECT_RAM_ADRESS) fprintf (stream, "Incorrect RAM adress.\n");
         else if (err == INCORRECT_ARG_TYPE)   fprintf (stream, "Incorrect argument type.\n");
+        else if (err == INCORRECT_JMP_IP)     fprintf (stream, "Incorrect ip to jump.\n");
         else                                  fprintf (stream, "Unknown error.\n");
     }
 }

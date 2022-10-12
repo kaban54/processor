@@ -150,7 +150,7 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
     if (stricmp (cmd, #name) == 0)                                                             \
     {                                                                                          \
         *(ip++) |= CMD_##name;                                                                 \
-        if (arg) if (GetArgs (txt -> lines [line] + symbs_read, &ip, line)) return COMP_ERROR; \
+        if (arg) if (PutArgs (txt -> lines [line] + symbs_read, &ip, line)) return COMP_ERROR; \
     }                                                                                          \
     else         
         
@@ -170,7 +170,7 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
     return OK;
 }
 
-int GetArgs (char *args, cmd_t **ip_p, size_t line)
+int PutArgs (char *args, cmd_t **ip_p, size_t line)
 {
     cmd_t *ip = *ip_p;
 
