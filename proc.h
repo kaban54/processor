@@ -14,7 +14,7 @@ typedef arg_t Elem_t;
 #include "stack.h"
 
 
-const int VERSION = 3;
+const int VERSION = 4;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -77,19 +77,20 @@ enum ERRORS
     UNKNOWN_CMD          = 11,
     INCORRECT_REG        = 12,
     INCORRECT_RAM_ADRESS = 13,
+    INCORRECT_ARG_TYPE   = 14,
 };
 
 enum CMDS
 {
-    HLT  =  0,
-    PUSH =  1,
-    POP  =  2,
-    IN   =  3,
-    OUT  =  4,
-    ADD  =  5,
-    SUB  =  6,
-    MUL  =  7,
-    DIV  =  8,
+    CMD_HLT  =  0,
+    CMD_PUSH =  1,
+    CMD_POP  =  2,
+    CMD_IN   =  3,
+    CMD_OUT  =  4,
+    CMD_ADD  =  5,
+    CMD_SUB  =  6,
+    CMD_MUL  =  7,
+    CMD_DIV  =  8,
 };
 
 enum ARG_TYPES

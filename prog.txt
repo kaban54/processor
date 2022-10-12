@@ -1,7 +1,16 @@
 push 10
 push 20
 ADD
-push [1025]
+pop rax
+push rax
+pop [0]
+
+push 1
+push 2
+ADD
+push [0]
+OUT
+push rax
 mul
 OUT
 HLT

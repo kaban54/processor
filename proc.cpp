@@ -96,11 +96,11 @@ int RunCode (Cpu_t *cpu)
 
         switch (cmd & CMD_MASK)
         {
-            case HLT:
+            case CMD_HLT:
             {
                 return OK;
             }
-            case PUSH:
+            case CMD_PUSH:
             {
                 arg_t arg = 0;
                 if (cmd & ARG_REG) 
@@ -109,6 +109,7 @@ int RunCode (Cpu_t *cpu)
                     if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
                     arg += cpu -> regs [reg];
                 }
+
                 if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
 
                 if (cmd & ARG_MEM)
@@ -121,7 +122,42 @@ int RunCode (Cpu_t *cpu)
                 
                 break;
             }
-            case ADD:
+            case CMD_POP:
+            {
+                if (cmd & ARG_IM && !(cmd & ARG_MEM)) return INCORRECT_ARG_TYPE;
+                
+                arg_t *val_ptr = nullptr;
+                
+                if (cmd & ARG_MEM)
+                {   
+                    arg_t arg = 0;
+
+                    if (cmd & ARG_REG)
+                    {
+                        int reg = cpu -> code [(cpu -> ip)++];
+                        if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
+                        arg += cpu -> regs [reg];
+                    }
+
+                    if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
+
+                    if (arg >= RAM_SIZE) return INCORRECT_RAM_ADRESS;
+
+                    val_ptr = cpu -> ram + arg;
+                }
+                else
+                {
+                    int reg = cpu -> code [(cpu -> ip)++];
+                    if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
+                    
+                    val_ptr = cpu -> regs + reg;
+                }   
+
+                if ( StackPop (&(cpu -> stk), val_ptr) ) return EMPTY_STACK;
+
+                break;
+            }
+            case CMD_ADD:
             {
                 int x1 = 0, x2 = 0;
                 int err = OK;
@@ -135,7 +171,7 @@ int RunCode (Cpu_t *cpu)
 
                 break;
             }
-            case MUL:
+            case CMD_MUL:
             {
                 int x1 = 0, x2 = 0;
                 int err = OK;
@@ -149,7 +185,7 @@ int RunCode (Cpu_t *cpu)
 
                 break;
             }
-            case SUB:
+            case CMD_SUB:
             {
                 int x1 = 0, x2 = 0;
                 int err = OK;
@@ -163,7 +199,7 @@ int RunCode (Cpu_t *cpu)
 
                 break;
             }
-            case DIV:
+            case CMD_DIV:
             {
                 arg_t x1 = 0, x2 = 0;
                 int err = OK;
@@ -178,7 +214,7 @@ int RunCode (Cpu_t *cpu)
 
                 break;
             }
-            case OUT:
+            case CMD_OUT:
             {
                 arg_t val = 0;
                 int err = OK;
@@ -191,7 +227,7 @@ int RunCode (Cpu_t *cpu)
 
                 break;
             }
-            case IN:
+            case CMD_IN:
             {
                 arg_t val = 0;
 
@@ -259,6 +295,7 @@ void CpuErr (Cpu_t *cpu, int err, FILE *stream)
         else if (err == UNKNOWN_CMD)          fprintf (stream, "Unknown command.\n");
         else if (err == INCORRECT_REG)        fprintf (stream, "Incorrect register name.\n");
         else if (err == INCORRECT_RAM_ADRESS) fprintf (stream, "Incorrect RAM adress.\n");
+        else if (err == INCORRECT_ARG_TYPE)   fprintf (stream, "Incorrect argument type.\n");
     }
 }
 
