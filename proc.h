@@ -14,7 +14,7 @@ typedef arg_t Elem_t;
 #include "stack.h"
 
 
-const int VERSION = 5;
+const int VERSION = 6;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -23,6 +23,8 @@ const size_t MAX_NUM_OF_ARGS = 2;
 const size_t  ARG_SIZE = sizeof (arg_t);
 const size_t  CMD_SIZE = sizeof (cmd_t);
 const size_t INFO_SIZE = sizeof (SIGNATURE) + sizeof (VERSION) + sizeof (int);
+
+const int CODE_SHIFT = 3;
 
 const size_t ERROR_MSG_SIZE = 100;
 FILE *ERROR_STREAM = stdout;

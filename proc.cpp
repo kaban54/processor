@@ -47,13 +47,13 @@ int ReadCode (const char *input_file_name, Cpu_t *cpu)
     if (inp_file == nullptr) return FOPEN_ERROR;
 
     size_t filesize = GetSize (inp_file);
-    cpu -> code_size = filesize / CMD_SIZE - 3;
+    cpu -> code_size = filesize / CMD_SIZE - CODE_SHIFT;
 
     cpu -> code = (cmd_t *) calloc (1, filesize);
     if (cpu -> code == nullptr) return ALLOC_ERROR;
     
     fread (cpu -> code, 1, filesize, inp_file);
-    cpu -> code += 3; 
+    cpu -> code += CODE_SHIFT;
 
     fclose (inp_file);
 
@@ -74,9 +74,9 @@ int InfoCheck (Cpu_t *cpu)
 {
     if (cpu == nullptr) return NULLPTR_ARG;
 
-    if (cpu -> code [-3] != SIGNATURE)            return WRONG_SIGNATURE;
-    if (cpu -> code [-2] != VERSION)              return WRONG_VERSION;
-    if (cpu -> code [-1] != cpu -> code_size + 3) return WRONG_CODESIZE;
+    if (cpu -> code [-3] != SIGNATURE)        return WRONG_SIGNATURE;
+    if (cpu -> code [-2] != VERSION)          return WRONG_VERSION;
+    if (cpu -> code [-1] != cpu -> code_size) return WRONG_CODESIZE; 
     
     return OK;
 }

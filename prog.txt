@@ -1,17 +1,5 @@
 push 10
 push 20
 ADD
-pop rax
-push rax
-pop [0]
-dump
-push 1
-push 2
-ADD
-push [0]
-OUT
-push rax
-mul
-DUMP
 OUT
 HLT

@@ -124,7 +124,7 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
     if (txt ->  lines == nullptr) return NULLPTR_ARG;
     if (cmds_p        == nullptr) return NULLPTR_ARG;
 
-    size_t size = (MAX_NUM_OF_ARGS * ARG_SIZE + CMD_SIZE) * txt -> len + INFO_SIZE; 
+    size_t size = (MAX_NUM_OF_ARGS * ARG_SIZE + CMD_SIZE) * (txt -> len) + INFO_SIZE;
 
     *cmds_p = (cmd_t *) (calloc (1, size));
 
@@ -135,7 +135,7 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
     cmds [0] = SIGNATURE;
     cmds [1] = VERSION;
 
-    int *cmd_ptr = cmds + 3;
+    int *ip = cmds + CODE_SHIFT;
 
     for (size_t line = 0; line < txt -> len; line++)
     {
@@ -146,12 +146,12 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
 
         if (stricmp (cmd, "") == 0) continue;
 
-#define DEF_CMD(name, num, arg, ...)                                                                \
-    if (stricmp (cmd, #name) == 0)                                                                  \
-    {                                                                                               \
-        *(cmd_ptr++) |= CMD_##name;                                                                 \
-        if (arg) if (GetArgs (txt -> lines [line] + symbs_read, &cmd_ptr, line)) return COMP_ERROR; \
-    }                                                                                               \
+#define DEF_CMD(name, num, arg, ...)                                                           \
+    if (stricmp (cmd, #name) == 0)                                                             \
+    {                                                                                          \
+        *(ip++) |= CMD_##name;                                                                 \
+        if (arg) if (GetArgs (txt -> lines [line] + symbs_read, &ip, line)) return COMP_ERROR; \
+    }                                                                                          \
     else         
         
         #include "cmd.h"
@@ -165,14 +165,14 @@ int SetCmds (struct Text *txt, cmd_t **cmds_p)
         }
     }
 
-    cmds[2] = cmd_ptr - cmds;
+    cmds[2] = ip - (cmds + CODE_SHIFT);
 
     return OK;
 }
 
-int GetArgs (char *args, cmd_t **cmd_ptr_p, size_t line)
+int GetArgs (char *args, cmd_t **ip_p, size_t line)
 {
-    cmd_t *cmd_ptr = *cmd_ptr_p;
+    cmd_t *ip = *ip_p;
 
     args = DeleteSpaces (args);
 
@@ -196,7 +196,7 @@ int GetArgs (char *args, cmd_t **cmd_ptr_p, size_t line)
         args++;
         len -= 2;
 
-        *(cmd_ptr - 1) |= ARG_MEM;
+        *(ip - 1) |= ARG_MEM;
     }
     
     char *arg1 = args;
@@ -212,12 +212,12 @@ int GetArgs (char *args, cmd_t **cmd_ptr_p, size_t line)
 
         if (arg2 [0] == 'r' && strlen (arg2) == 3 && arg2 [2] == 'x')
         {
-            *(cmd_ptr++) = arg2 [1] - 'a' + 1;
+            *(ip++) = arg2 [1] - 'a' + 1;
             got_reg = 1;
         }
         else if (isdigit (arg2 [0]))
         {
-            sscanf (arg2, "%d", cmd_ptr + 1);
+            sscanf (arg2, "%d", ip + 1);
             got_im = 1;
         }
         else
@@ -231,13 +231,13 @@ int GetArgs (char *args, cmd_t **cmd_ptr_p, size_t line)
 
     if (!got_reg && arg1 [0] == 'r' && strlen (arg1) == 3 && arg1 [2] == 'x')
     {
-        *(cmd_ptr++) = arg1 [1] - 'a' + 1;
+        *(ip++) = arg1 [1] - 'a' + 1;
         got_reg = 1;
-        if (got_im) cmd_ptr++;
+        if (got_im) ip++;
     }
     else if (!got_im && isdigit (arg1 [0]))
     {
-        sscanf (arg1, "%d", cmd_ptr++);
+        sscanf (arg1, "%d", ip++);
         got_im = 1;
     }
     else
@@ -246,10 +246,10 @@ int GetArgs (char *args, cmd_t **cmd_ptr_p, size_t line)
         return COMP_ERROR;
     }
 
-    if (arg2) *(cmd_ptr - 3) |= ARG_IM | ARG_REG;
-    else      *(cmd_ptr - 2) |= got_im ? ARG_IM : ARG_REG;
+    if (arg2) *(ip - 3) |= ARG_IM | ARG_REG;
+    else      *(ip - 2) |= got_im ? ARG_IM : ARG_REG;
 
-    *cmd_ptr_p = cmd_ptr;
+    *ip_p = ip;
 
     return OK;
 }
@@ -276,7 +276,7 @@ int WriteCmds (const char *output_file_name, cmd_t *cmds)
     FILE *out_file = fopen (output_file_name, "wb");
     if (out_file == nullptr) return FOPEN_ERROR;
 
-    if (fwrite ((void *) cmds, CMD_SIZE, cmds [2], out_file) != cmds [2]) return FWRITE_ERROR;
+    if (fwrite ((void *) cmds, CMD_SIZE, cmds [2] + CODE_SHIFT, out_file) != cmds [2]) return FWRITE_ERROR;
 
     fclose (out_file);
 

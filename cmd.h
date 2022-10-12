@@ -140,3 +140,13 @@ DEF_CMD (DUMP, 9, 0,
     PrintRegs (cpu, stdout);
     printf ("\n");
 })
+/*
+DEF_CMD (JMP, 10, 1,
+{
+    int new_ip = cpu -> code [(cpu -> ip)++]; 
+    
+    if (new_ip >= cpu -> code_size)
+
+    cpu -> ip = new_ip;
+
+})*/
