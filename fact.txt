@@ -1,0 +1,21 @@
+IN
+CALL fact
+OUT
+HLT
+
+fact:
+    POP rax
+    PUSH rax
+    PUSH 1
+    JBE ret_one
+    PUSH rax
+    PUSH rax
+    PUSH 1
+    SUB
+    CALL fact
+    MUL
+    RET
+
+ret_one:
+    PUSH 1
+    RET
