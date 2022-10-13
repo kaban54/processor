@@ -152,7 +152,7 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
     for (int loop = 0; loop < NUM_OF_ASM; loop++)
     {
         int ip = 0;
-        
+
         for (size_t line = 0; line < txt -> len; line++)
         {
             int symbs_read = 0;
@@ -163,12 +163,12 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
             if (stricmp (cmd, "") == 0) continue;
 
 
-#define DEF_CMD(name, num, arg, ...)                                                                                \
-    if (stricmp (cmd, #name) == 0)                                                                                  \
-    {                                                                                                               \
-        cmds [ip++] |= CMD_##name;                                                                                  \
-        if (arg) if (PutArgs (txt -> lines [line] + symbs_read, cmds, &ip, &label_list, line, loop)) return COMP_ERROR;    \
-    }                                                                                                               \
+#define DEF_CMD(name, num, arg, ...)                                                                                    \
+    if (stricmp (cmd, #name) == 0)                                                                                      \
+    {                                                                                                                   \
+        cmds [ip++] |= CMD_##name;                                                                                      \
+        if (arg) if (PutArgs (txt -> lines [line] + symbs_read, cmds, &ip, &label_list, line, loop)) return COMP_ERROR; \
+    }                                                                                                                   \
     else   
         
         #include "cmd.h"
@@ -176,8 +176,7 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
 #undef DEF_CMD
 
 
-            /* else */
-            if (strchr (cmd, ':'))
+            /* else */ if (strchr (cmd, ':'))
             {   
                 if (loop >= 1) continue;
                 if (AddLabel (cmd, &label_list, ip, line)) return COMP_ERROR;
@@ -346,7 +345,7 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t 
         {
             cmds [*ip + 1] = GetLabelIp (arg2, label_list);
 
-            if (loop >= 2 && cmds [*ip +  1] == -1)
+            if (loop >= 2 && cmds [*ip + 1] == -1)
             {
                 fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
                 return COMP_ERROR;
@@ -360,9 +359,9 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t 
 
     if (!got_reg && arg1 [0] == 'r' && strlen (arg1) == 3 && arg1 [2] == 'x')
     {
-        *(ip++) = arg1 [1] - 'a' + 1;
+        cmds [(*ip)++] = arg1 [1] - 'a' + 1;
         got_reg = 1;
-        if (got_im) ip++;
+        if (got_im) (*ip)++;
     }
     else if (!got_im && isdigit (arg1 [0]))
     {
