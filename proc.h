@@ -14,10 +14,13 @@ typedef arg_t Elem_t;
 #include "stack.h"
 
 
-const int VERSION = 9;
+const int VERSION = 10;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
+const size_t MAX_LABEL_LEN = 20;
+
+const size_t NUM_OF_ASM = 2;
 
 const size_t MAX_NUM_OF_ARGS = 2;
 const size_t  ARG_SIZE = sizeof (arg_t);
@@ -32,7 +35,7 @@ FILE *ERROR_STREAM = stdout;
 const int CMD_MASK = 0x000000FF;
 
 const size_t NUM_OF_REGS = 5;
-const size_t RAM_SIZE = 1024;
+const size_t RAM_SIZE = 100;
 
 
 struct Text
@@ -56,8 +59,15 @@ struct Cpu_t
 
 struct Label_t
 {
-    char *name;
+    char name [MAX_LABEL_LEN + 1];
     int ip;
+};
+
+struct Label_list_t
+{
+    size_t     num;
+    size_t max_num;
+    Label_t *list;
 };
 
 enum REGISTERS
@@ -120,9 +130,15 @@ int SetLines (struct Text *txt);
 
 int Compile (struct Text *txt, cmd_t **cmds_p);
 
+int AddLabel (char *cmd, Label_list_t *label_list, int ip, size_t line);
+
+int CheckLabelName (char **name_p, Label_list_t *label_list, size_t line);
+
+int ExpandLabelList (Label_list_t *label_list);
+
 int WriteCmds (const char *output_file_name, cmd_t *cmds);
 
-int PutArgs (char *args, cmd_t *cmds, int *ip, size_t line);
+int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t line, int loop);
 
 char *DeleteSpaces (char *str);
 

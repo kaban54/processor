@@ -67,17 +67,6 @@ int ReadText (const char *input_file_name, struct Text *txt)
     return OK;
 }
 
-
-size_t GetSize (FILE *inp_file)
-{
-    if (inp_file == nullptr) return 0;
-    struct stat stat_buf = {};
-
-    fstat (fileno (inp_file), &stat_buf);
-    return stat_buf.st_size;
-}
-
-
 size_t CharReplace (char *str, char ch1, char ch2)
 {
     if (str == nullptr) return 0;
@@ -95,6 +84,14 @@ size_t CharReplace (char *str, char ch1, char ch2)
     return count;
 }
 
+size_t GetSize (FILE *inp_file)
+{
+    if (inp_file == nullptr) return 0;
+    struct stat stat_buf = {};
+
+    fstat (fileno (inp_file), &stat_buf);
+    return stat_buf.st_size;
+}
 
 int SetLines (struct Text *txt)
 {
@@ -142,56 +139,162 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
     cmds [1] = VERSION;
 
     cmds += CODE_SHIFT;
-    int ip = 0;
-/*
-    size_t max_num_of_labels = 32;
-    size_t     num_of_labels =  0;
 
-    Label_t *label_list = (Label_t *) calloc (max_num_of_labels, sizeof (Label_t));
-    if (label_list == nullptr) return ALLOC_ERROR;
-*/
-    for (size_t line = 0; line < txt -> len; line++)
+    Label_list_t label_list = {};
+
+    label_list.max_num = 32;
+    label_list.    num =  0;
+
+    label_list.list = (Label_t *) calloc (label_list.max_num, sizeof (Label_t));
+    if (label_list.list == nullptr) return ALLOC_ERROR;
+    
+
+    for (int loop = 0; loop < NUM_OF_ASM; loop++)
     {
-        int symbs_read = 0;
-        char cmd [BUFLEN] = "";
+        int ip = 0;
+        
+        for (size_t line = 0; line < txt -> len; line++)
+        {
+            int symbs_read = 0;
+            char cmd [BUFLEN] = "";
 
-        sscanf (txt -> lines [line], "%s%n", cmd, &symbs_read);
+            sscanf (txt -> lines [line], "%s%n", cmd, &symbs_read);
 
-        if (stricmp (cmd, "") == 0) continue;
+            if (stricmp (cmd, "") == 0) continue;
 
-#define DEF_CMD(name, num, arg, ...)                                                                 \
-    if (stricmp (cmd, #name) == 0)                                                                   \
-    {                                                                                                \
-        cmds [ip++] |= CMD_##name;                                                                   \
-        if (arg) if (PutArgs (txt -> lines [line] + symbs_read, cmds, &ip, line)) return COMP_ERROR; \
-    }                                                                                                \
+
+#define DEF_CMD(name, num, arg, ...)                                                                                \
+    if (stricmp (cmd, #name) == 0)                                                                                  \
+    {                                                                                                               \
+        cmds [ip++] |= CMD_##name;                                                                                  \
+        if (arg) if (PutArgs (txt -> lines [line] + symbs_read, cmds, &ip, &label_list, line, loop)) return COMP_ERROR;    \
+    }                                                                                                               \
     else   
         
         #include "cmd.h"
 
 #undef DEF_CMD
 
-        /* else */
-        /*if (strchr (cmd, ':')) if (AddLabel (cmd, label_list, ip, line)) return COMP_ERROR;
 
-        else*/
+            /* else */
+            if (strchr (cmd, ':'))
+            {   
+                if (loop >= 1) continue;
+                if (AddLabel (cmd, &label_list, ip, line)) return COMP_ERROR;
+            }
+
+            else
+            {
+                fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
+                return COMP_ERROR;
+            }
+        }
+
+        cmds [-1] = ip;
+    }
+
+    return OK;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+int AddLabel (char *cmd, Label_list_t *label_list, int ip, size_t line)
+{
+    if (cmd == nullptr || label_list == nullptr) return NULLPTR_ARG;
+
+    int err = OK;
+
+    err = CheckLabelName (&cmd, label_list, line);
+    if (err) return err;
+
+    err = ExpandLabelList (label_list);
+    if (err) return err;
+
+    strcpy (((label_list -> list) [label_list -> num]).name, cmd);
+    ((label_list -> list) [label_list -> num++]).ip = ip;
+
+    return OK;
+}
+
+
+int CheckLabelName (char **name_p, Label_list_t *label_list, size_t line)
+{
+    if (name_p == nullptr || *name_p == nullptr || label_list == nullptr) return NULLPTR_ARG;
+
+    char *name = *name_p;
+
+    name = DeleteSpaces (name);
+
+    size_t len = strlen (name);
+
+    if (name [len - 1] != ':')
+    {
+        fprintf (ERROR_STREAM, "Compilation error:\nincorrect label format at line (%Iu).\n", line + 1);
+        return COMP_ERROR;
+    }
+    name [len - 1] = '\0';
+
+    name = DeleteSpaces (name);
+
+    len = strlen (name);
+
+    if (strcmp (name, "") == 0 || isdigit (name [0]) || (len == 3 && name [0] == 'r' && name [2] == 'x'))
+    {
+        fprintf (ERROR_STREAM, "Compilation error:\nincorrect label name at line (%Iu).\n", line + 1);
+        return COMP_ERROR;
+    }
+
+    if (len >= MAX_LABEL_LEN)
+    {
+        fprintf (ERROR_STREAM, "Compilation error:\nlabel name at line (%Iu) is too long.\n", line + 1);
+        return COMP_ERROR;
+    }
+
+    for (size_t index = 0; index < label_list -> num; index++)
+    {
+        if (strcmp ((label_list -> list [index]).name, name) == 0)
         {
-            fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
+            fprintf (ERROR_STREAM, "Compilation error at line (%Iu):\nlabel (%s) has been already created.\n", line + 1, name);
             return COMP_ERROR;
         }
     }
 
-    cmds[-1] = ip;
+    *name_p = name;
 
     return OK;
 }
-/*
-int AddLabel (const char *cmd, Label_t *label_list, int ip, size_t line)
-{
 
+int ExpandLabelList (Label_list_t *label_list)
+{
+    if (label_list == nullptr) return NULLPTR_ARG;
+
+    if (label_list -> num >= label_list -> max_num)
+    {
+        size_t old_num = label_list -> max_num;
+
+        label_list -> list = (Label_t *) Recalloc ((void *) label_list -> list, old_num * 2, sizeof (Label_t), old_num);
+        if (label_list -> list == nullptr) return ALLOC_ERROR;
+        
+        label_list -> max_num *= 2;
+    }
+
+    return OK;
 }
-*/
-int PutArgs (char *args, cmd_t *cmds, int *ip, size_t line)
+
+int GetLabelIp (char *name, Label_list_t *label_list)
+{
+    if (name == nullptr || label_list == nullptr) return -1;
+
+    for (size_t index = 0; index < label_list -> num; index++)
+        if (strcmp ((label_list -> list [index]).name, name) == 0)
+            return (label_list -> list [index]).ip;
+    
+    return -1;
+}
+
+//----------------------------------------------------------------------------------------------------------------------
+
+int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t line, int loop)
 {
     args = DeleteSpaces (args);
 
@@ -241,8 +344,15 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, size_t line)
         }
         else
         {
-            fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
-            return COMP_ERROR;
+            cmds [*ip + 1] = GetLabelIp (arg2, label_list);
+
+            if (loop >= 2 && cmds [*ip +  1] == -1)
+            {
+                fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
+                return COMP_ERROR;
+            }
+
+            got_im = 1;
         }
     }
 
@@ -261,8 +371,15 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, size_t line)
     }
     else
     {
-        fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
-        return COMP_ERROR;
+        if (!got_im) cmds [(*ip)++] = GetLabelIp (arg1, label_list);
+            
+        if (got_im || (loop >= 2 && cmds [*ip - 1] == -1))
+        {
+            fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
+            return COMP_ERROR;
+        }
+
+        got_im = 1;
     }
 
     if (arg2) cmds [*ip - 3] |= ARG_IM | ARG_REG;
@@ -270,6 +387,8 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, size_t line)
 
     return OK;
 }
+
+//----------------------------------------------------------------------------------------------------------------------
 
 char *DeleteSpaces (char *str)
 {
@@ -310,4 +429,15 @@ void AsmErr (int err, FILE *stream)
     else if (err == ALLOC_ERROR) fprintf (stream, "Cannot allocate memory.\n");
     else if (err ==  COMP_ERROR) fprintf (stream, "Compilation error.\n");
     else                         fprintf (stream, "Unknown error.\n");
+}
+
+
+void *Recalloc (void *memptr, size_t num, size_t size, size_t old_num)
+{
+    memptr = realloc (memptr, num * size);
+    if (memptr == NULL) return NULL;
+
+    if (num > old_num) memset ((void *) ((char *) memptr + old_num * size), 0, (num - old_num) * size);
+
+    return memptr;
 }
