@@ -54,7 +54,7 @@ struct Cpu_t
     arg_t ram  [RAM_SIZE];
 };
 
-struct Label
+struct Label_t
 {
     char *name;
     int ip;
@@ -122,7 +122,7 @@ int Compile (struct Text *txt, cmd_t **cmds_p);
 
 int WriteCmds (const char *output_file_name, cmd_t *cmds);
 
-int PutArgs (char *args, cmd_t **cmd_ptr_p, size_t line);
+int PutArgs (char *args, cmd_t *cmds, int *ip, size_t line);
 
 char *DeleteSpaces (char *str);
 

@@ -141,8 +141,15 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
     cmds [0] = SIGNATURE;
     cmds [1] = VERSION;
 
-    int *ip = cmds + CODE_SHIFT;
+    cmds += CODE_SHIFT;
+    int ip = 0;
+/*
+    size_t max_num_of_labels = 32;
+    size_t     num_of_labels =  0;
 
+    Label_t *label_list = (Label_t *) calloc (max_num_of_labels, sizeof (Label_t));
+    if (label_list == nullptr) return ALLOC_ERROR;
+*/
     for (size_t line = 0; line < txt -> len; line++)
     {
         int symbs_read = 0;
@@ -152,34 +159,40 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
 
         if (stricmp (cmd, "") == 0) continue;
 
-#define DEF_CMD(name, num, arg, ...)                                                           \
-    if (stricmp (cmd, #name) == 0)                                                             \
-    {                                                                                          \
-        *(ip++) |= CMD_##name;                                                                 \
-        if (arg) if (PutArgs (txt -> lines [line] + symbs_read, &ip, line)) return COMP_ERROR; \
-    }                                                                                          \
-    else         
+#define DEF_CMD(name, num, arg, ...)                                                                 \
+    if (stricmp (cmd, #name) == 0)                                                                   \
+    {                                                                                                \
+        cmds [ip++] |= CMD_##name;                                                                   \
+        if (arg) if (PutArgs (txt -> lines [line] + symbs_read, cmds, &ip, line)) return COMP_ERROR; \
+    }                                                                                                \
+    else   
         
         #include "cmd.h"
 
 #undef DEF_CMD
 
-    /* else */
+        /* else */
+        /*if (strchr (cmd, ':')) if (AddLabel (cmd, label_list, ip, line)) return COMP_ERROR;
+
+        else*/
         {
             fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
             return COMP_ERROR;
         }
     }
 
-    cmds[2] = ip - (cmds + CODE_SHIFT);
+    cmds[-1] = ip;
 
     return OK;
 }
-
-int PutArgs (char *args, cmd_t **ip_p, size_t line)
+/*
+int AddLabel (const char *cmd, Label_t *label_list, int ip, size_t line)
 {
-    cmd_t *ip = *ip_p;
 
+}
+*/
+int PutArgs (char *args, cmd_t *cmds, int *ip, size_t line)
+{
     args = DeleteSpaces (args);
 
     if (*args == '\0')
@@ -202,7 +215,7 @@ int PutArgs (char *args, cmd_t **ip_p, size_t line)
         args++;
         len -= 2;
 
-        *(ip - 1) |= ARG_MEM;
+        cmds [*ip - 1] |= ARG_MEM;
     }
     
     char *arg1 = args;
@@ -218,12 +231,12 @@ int PutArgs (char *args, cmd_t **ip_p, size_t line)
 
         if (arg2 [0] == 'r' && strlen (arg2) == 3 && arg2 [2] == 'x')
         {
-            *(ip++) = arg2 [1] - 'a' + 1;
+            cmds [(*ip)++] = arg2 [1] - 'a' + 1;
             got_reg = 1;
         }
         else if (isdigit (arg2 [0]))
         {
-            sscanf (arg2, "%d", ip + 1);
+            sscanf (arg2, "%d", cmds + *ip + 1);
             got_im = 1;
         }
         else
@@ -243,7 +256,7 @@ int PutArgs (char *args, cmd_t **ip_p, size_t line)
     }
     else if (!got_im && isdigit (arg1 [0]))
     {
-        sscanf (arg1, "%d", ip++);
+        sscanf (arg1, "%d", cmds + (*ip)++);
         got_im = 1;
     }
     else
@@ -252,10 +265,8 @@ int PutArgs (char *args, cmd_t **ip_p, size_t line)
         return COMP_ERROR;
     }
 
-    if (arg2) *(ip - 3) |= ARG_IM | ARG_REG;
-    else      *(ip - 2) |= got_im ? ARG_IM : ARG_REG;
-
-    *ip_p = ip;
+    if (arg2) cmds [*ip - 3] |= ARG_IM | ARG_REG;
+    else      cmds [*ip - 2] |= got_im ? ARG_IM : ARG_REG;
 
     return OK;
 }
