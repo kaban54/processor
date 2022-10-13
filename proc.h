@@ -14,7 +14,7 @@ typedef arg_t Elem_t;
 #include "stack.h"
 
 
-const int VERSION = 10;
+const int VERSION = 11;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -37,6 +37,9 @@ const int CMD_MASK = 0x000000FF;
 const size_t NUM_OF_REGS = 5;
 const size_t RAM_SIZE = 100;
 
+const size_t      STACK_BASE_CAPACITY = 16;
+const size_t CALL_STACK_BASE_CAPACITY =  8;
+
 
 struct Text
 {
@@ -50,8 +53,10 @@ struct Cpu_t
 {
     int ip;
     cmd_t *code;
-    Stack_t stk;
     size_t code_size;
+
+    Stack_t      stk;
+    Stack_t call_stk;
 
     arg_t regs [NUM_OF_REGS];
     arg_t ram  [RAM_SIZE];
@@ -96,6 +101,7 @@ enum ERRORS
     INCORRECT_RAM_ADRESS = 13,
     INCORRECT_ARG_TYPE   = 14,
     INCORRECT_JMP_IP     = 15,
+    EMPTY_CALL_STACK     = 16,
 };
 
 

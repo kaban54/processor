@@ -81,7 +81,9 @@ int RunCode (Cpu_t *cpu)
     if (cpu         == nullptr) return NULLPTR_ARG;
     if (cpu -> code == nullptr) return NULLPTR_ARG;
 
-    StackCtor (&(cpu -> stk), cpu -> code_size / 8);
+    StackCtor (&(cpu -> call_stk), CALL_STACK_BASE_CAPACITY);
+    StackCtor (&(cpu ->      stk),      STACK_BASE_CAPACITY);
+
     cpu -> ip = 0;
 
     while (1)
@@ -191,6 +193,7 @@ void CpuErr (Cpu_t *cpu, int err, FILE *stream)
         else if (err == INCORRECT_RAM_ADRESS) fprintf (stream, "Incorrect RAM adress.\n");
         else if (err == INCORRECT_ARG_TYPE)   fprintf (stream, "Incorrect argument type.\n");
         else if (err == INCORRECT_JMP_IP)     fprintf (stream, "Incorrect ip to jump.\n");
+        else if (err == EMPTY_CALL_STACK)     fprintf (stream, "Cannot return (call stack is empty).\n");
         else                                  fprintf (stream, "Unknown error.\n");
     }
 }
