@@ -155,6 +155,21 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
 
         for (size_t line = 0; line < txt -> len; line++)
         {
+            if (line == 0)
+            {
+                int accuracy_coef = 0;
+                
+                if (sscanf (txt -> lines [line], "%d", &accuracy_coef) == 0)
+                {
+                    fprintf (ERROR_STREAM, "Compilation error:\nfirst line has to contain accuracy coefficient.\n");
+                    return COMP_ERROR;
+                }
+
+                cmds [-CODE_SHIFT + 3] = accuracy_coef;
+
+                continue;
+            }
+
             int symbs_read = 0;
             char cmd [BUFLEN] = "";
 
@@ -189,7 +204,7 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
             }
         }
 
-        cmds [-1] = ip;
+        cmds [-CODE_SHIFT + 2] = ip;
     }
 
     return OK;

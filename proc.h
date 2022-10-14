@@ -14,7 +14,7 @@ typedef arg_t Elem_t;
 #include "stack.h"
 
 
-const int VERSION = 11;
+const int VERSION = 12;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -25,9 +25,9 @@ const size_t NUM_OF_ASM = 2;
 const size_t MAX_NUM_OF_ARGS = 2;
 const size_t  ARG_SIZE = sizeof (arg_t);
 const size_t  CMD_SIZE = sizeof (cmd_t);
-const size_t INFO_SIZE = sizeof (SIGNATURE) + sizeof (VERSION) + sizeof (int);
 
-const int CODE_SHIFT = 3;
+const int CODE_SHIFT = 4;
+const size_t INFO_SIZE = sizeof (cmd_t) * CODE_SHIFT;
 
 const size_t ERROR_MSG_SIZE = 100;
 FILE *ERROR_STREAM = stdout;
@@ -39,7 +39,6 @@ const size_t RAM_SIZE = 100;
 
 const size_t      STACK_BASE_CAPACITY = 16;
 const size_t CALL_STACK_BASE_CAPACITY =  8;
-
 
 struct Text
 {
@@ -60,6 +59,8 @@ struct Cpu_t
 
     arg_t regs [NUM_OF_REGS];
     arg_t ram  [RAM_SIZE];
+
+    int accuracy_coef;
 };
 
 struct Label_t
@@ -163,7 +164,7 @@ int GetArgs (Cpu_t *cpu, cmd_t cmd, arg_t *arg);
 
 void FreeCpu (Cpu_t *cpu);
 
-int PrintArg (arg_t arg);
+int PrintArg (arg_t arg, int accuracy_coef);
 
 int ScanArg (arg_t *arg);
 

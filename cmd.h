@@ -27,14 +27,14 @@ DEF_CMD (POP, 2, 1,
         {
             int reg = cpu -> code [(cpu -> ip)++];
             if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
-            arg += cpu -> regs [reg];
+            arg += (cpu -> regs [reg]) / cpu -> accuracy_coef;
         }
 
         if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
 
         if (arg >= RAM_SIZE) return INCORRECT_RAM_ADRESS;
 
-        val_ptr = cpu -> ram + arg;
+        val_ptr = (cpu -> ram + arg);
     }
     else
     {
@@ -51,7 +51,7 @@ DEF_CMD (IN, 3, 0,
 {
     arg_t val = 0;
     ScanArg (&val);
-    StackPush (&(cpu -> stk), val);
+    StackPush (&(cpu -> stk), val * cpu -> accuracy_coef);
 })
 
 DEF_CMD (OUT, 4, 0,
@@ -63,7 +63,7 @@ DEF_CMD (OUT, 4, 0,
 
     if (err) return EMPTY_STACK;
 
-    PrintArg (val);
+    PrintArg (val, cpu -> accuracy_coef);
 })
 
 DEF_CMD (ADD, 5, 0, 
@@ -104,7 +104,7 @@ DEF_CMD (MUL, 7, 0,
 
     if (err) return EMPTY_STACK;
 
-    StackPush (&(cpu -> stk), x1 * x2);
+    StackPush (&(cpu -> stk), x1 * x2 / cpu -> accuracy_coef);
 
 })
 
@@ -119,7 +119,7 @@ DEF_CMD (DIV, 8, 0,
     if (err)     return EMPTY_STACK;
     if (x1 == 0) return DIV_BY_ZERO;
 
-    StackPush (&(cpu -> stk), x2 / x1);
+    StackPush (&(cpu -> stk), x2 * cpu -> accuracy_coef / x1);
 })
 
 DEF_CMD (DUMP, 9, 0,
@@ -136,6 +136,8 @@ DEF_CMD (JMP, 10, 1,
 
     int err = GetArgs (cpu, cmd, &arg);
     if (err) return err;
+
+    arg = arg / cpu -> accuracy_coef;
 
     if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;
 
@@ -164,6 +166,8 @@ DEF_CMD (name, num, 1,                                      \
     err |= GetArgs (cpu, cmd, &arg);                        \
     if (err) return err;                                    \
                                                             \
+    arg = arg / cpu -> accuracy_coef;                              \
+                                                            \
     if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;   \
                                                             \
     cpu -> ip = arg;                                        \
@@ -183,12 +187,15 @@ DEF_JMP (JNE, 16, !=)
 
 #undef DEF_JMP
 
+
 DEF_CMD (CALL, 17, 1,
 {
     arg_t arg = 0;
 
     int err = GetArgs (cpu, cmd, &arg);
     if (err) return err;
+
+    arg = arg / cpu -> accuracy_coef;
 
     if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;
 

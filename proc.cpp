@@ -68,9 +68,9 @@ int InfoCheck (Cpu_t *cpu)
 {
     if (cpu == nullptr) return NULLPTR_ARG;
 
-    if (cpu -> code [-3] != SIGNATURE)        return WRONG_SIGNATURE;
-    if (cpu -> code [-2] != VERSION)          return WRONG_VERSION;
-    if (cpu -> code [-1] != cpu -> code_size) return WRONG_CODESIZE;
+    if (cpu -> code [-CODE_SHIFT    ] != SIGNATURE)        return WRONG_SIGNATURE;
+    if (cpu -> code [-CODE_SHIFT + 1] != VERSION)          return WRONG_VERSION;
+    if (cpu -> code [-CODE_SHIFT + 2] != cpu -> code_size) return WRONG_CODESIZE;
     
     return OK;
 }
@@ -85,6 +85,7 @@ int RunCode (Cpu_t *cpu)
     StackCtor (&(cpu ->      stk),      STACK_BASE_CAPACITY);
 
     cpu -> ip = 0;
+    cpu -> accuracy_coef = cpu -> code [-CODE_SHIFT + 3];
 
     while (1)
     {
@@ -128,10 +129,11 @@ int GetArgs (Cpu_t *cpu, cmd_t cmd, arg_t *arg_p)
         arg += cpu -> regs [reg];
     }
 
-    if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
+    if (cmd & ARG_IM ) arg += (cpu -> code [(cpu -> ip)++]) * cpu -> accuracy_coef;
 
     if (cmd & ARG_MEM)
     {
+        arg = arg / cpu -> accuracy_coef;
         if (arg >= RAM_SIZE) return INCORRECT_RAM_ADRESS;
         arg = cpu -> ram [arg];
     }
@@ -146,7 +148,7 @@ void FreeCpu (Cpu_t *cpu)
 {
     if (cpu == nullptr) return;
 
-    free (cpu -> code - 3);
+    free (cpu -> code - CODE_SHIFT);
     
     cpu -> ip = 0;
     cpu -> code_size = 0;
@@ -159,9 +161,10 @@ void FreeCpu (Cpu_t *cpu)
 
 
 
-int PrintArg (arg_t arg)
+int PrintArg (arg_t arg, int accuracy_coef)
 {
-    return printf ("%d\n", arg);
+    if (accuracy_coef == 1) return printf ("%d\n", arg);
+    else                    return printf ("%lf\n", (double) arg / accuracy_coef);  
 }
 
 int ScanArg (arg_t *arg)
@@ -206,10 +209,10 @@ void PrintCode (Cpu_t *cpu, FILE *stream)
     int right = left + 11 < cpu -> code_size ? left + 11 : cpu -> code_size;
 
     fprintf (stream, "IP:   ");
-    for (int index = left; index < right; index ++) fprintf (stream, " %04d ", index);
+    for (int index = left; index < right; index ++) fprintf (stream, " %04X ", index);
     fprintf (stream, "\nCMD:  ");
     for (int index = left; index < right; index ++) fprintf (stream, " %04X ", cpu -> code [index]);
-    fprintf (stream, "\n"      );
+    fprintf (stream, "\n      ");
     for (int index = left; index < right; index ++) fprintf (stream, index == cpu -> ip ? "   ^  " : "      " );
     fprintf (stream, "\n");
 }
