@@ -142,30 +142,6 @@ DEF_CMD (JMP, 10, 1,
     cpu -> ip = arg;
 })
 
-DEF_CMD (CALL, 17, 1,
-{
-    arg_t arg = 0;
-
-    int err = GetArgs (cpu, cmd, &arg);
-    if (err) return err;
-
-    if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;
-
-    StackPush (&(cpu -> call_stk), cpu -> ip);
-
-    cpu -> ip = arg;
-})
-
-DEF_CMD (RET, 18, 0,
-{
-    int ip = 0;
-
-    int err = StackPop (&(cpu -> call_stk), &ip);
-    if (err) return EMPTY_CALL_STACK;
-
-    cpu -> ip = ip;
-})
-
 #define DEF_JMP(name, num ,op)                              \
 DEF_CMD (name, num, 1,                                      \
 {                                                           \
@@ -206,3 +182,27 @@ DEF_JMP (JE , 15, ==)
 DEF_JMP (JNE, 16, !=)
 
 #undef DEF_JMP
+
+DEF_CMD (CALL, 17, 1,
+{
+    arg_t arg = 0;
+
+    int err = GetArgs (cpu, cmd, &arg);
+    if (err) return err;
+
+    if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;
+
+    StackPush (&(cpu -> call_stk), cpu -> ip);
+
+    cpu -> ip = arg;
+})
+
+DEF_CMD (RET, 18, 0,
+{
+    int ip = 0;
+
+    int err = StackPop (&(cpu -> call_stk), &ip);
+    if (err) return EMPTY_CALL_STACK;
+
+    cpu -> ip = ip;
+})

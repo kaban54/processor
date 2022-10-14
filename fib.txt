@@ -1,0 +1,36 @@
+IN
+CALL fib
+OUT
+HLT
+
+fib:
+    POP rax
+
+    PUSH rax
+    PUSH 2
+    JBE ret_one
+
+    PUSH rax
+    PUSH 1
+    SUB 
+    PUSH rax
+    PUSH 2
+    SUB
+
+    CALL fib
+    CALL swap   
+    CALL fib
+
+    ADD
+    RET
+
+ret_one:
+    PUSH 1
+    RET
+
+swap:
+    POP rax
+    POP rbx
+    push rax
+    push rbx
+    RET
