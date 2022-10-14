@@ -164,7 +164,7 @@ void FreeCpu (Cpu_t *cpu)
 int PrintArg (arg_t arg, int accuracy_coef)
 {
     if (accuracy_coef == 1) return printf ("%d\n", arg);
-    else                    return printf ("%lf\n", (double) arg / accuracy_coef);  
+    else                    return printf ("%.3lf\n", (double) arg / accuracy_coef);  
 }
 
 int ScanArg (arg_t *arg)
@@ -191,6 +191,7 @@ void CpuErr (Cpu_t *cpu, int err, FILE *stream)
         PrintCode (cpu, stream);
              if (err == EMPTY_STACK)          fprintf (stream, "Cannot get a value from stack.\n");
         else if (err == DIV_BY_ZERO)          fprintf (stream, "Division by zero.\n");
+        else if (err == SQRT_OF_NEG)          fprintf (stream, "Square root of negative number.\n");
         else if (err == UNKNOWN_CMD)          fprintf (stream, "Unknown command.\n");
         else if (err == INCORRECT_REG)        fprintf (stream, "Incorrect register name.\n");
         else if (err == INCORRECT_RAM_ADRESS) fprintf (stream, "Incorrect RAM adress.\n");

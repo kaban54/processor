@@ -213,3 +213,19 @@ DEF_CMD (RET, 18, 0,
 
     cpu -> ip = ip;
 })
+
+DEF_CMD (SQRT, 19, 0,
+{
+    arg_t x = 0;
+    int err = OK;
+
+    err |= StackPop (&(cpu -> stk), &x);
+    if (err) return EMPTY_STACK;
+
+    if (x < 0) return SQRT_OF_NEG;
+
+    x = (arg_t) (sqrt (((double) x) / cpu -> accuracy_coef) * cpu -> accuracy_coef); 
+
+    StackPush (&(cpu -> stk),  x);
+
+})

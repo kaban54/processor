@@ -11,10 +11,11 @@ typedef arg_t Elem_t;
 #include <ctype.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <math.h>
 #include "stack.h"
 
 
-const int VERSION = 12;
+const int VERSION = 13;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -103,6 +104,7 @@ enum ERRORS
     INCORRECT_ARG_TYPE   = 14,
     INCORRECT_JMP_IP     = 15,
     EMPTY_CALL_STACK     = 16,
+    SQRT_OF_NEG          = 17,
 };
 
 
