@@ -1,0 +1,209 @@
+1000
+
+IN
+IN
+IN
+
+CALL solve_square
+
+POP rdx
+
+PUSH rdx
+PUSH 0
+JE out0
+
+PUSH rdx
+PUSH -1
+JE outinf
+
+PUSH rdx
+PUSH 1
+JE out1
+
+PUSH rdx
+PUSH 2
+JE out2
+
+
+out0:
+PUSH 0
+OUT
+JMP hlt_
+
+outinf:
+PUSH -1
+OUT
+JMP hlt_
+
+out1:
+PUSH 1
+OUT
+OUT
+JMP hlt_
+
+out2:
+PUSH 2
+OUT
+OUT
+OUT
+JMP hlt_
+
+
+hlt_:
+HLT
+
+
+solve_square:
+    POP rcx
+    POP rbx
+    POP rax
+
+    PUSH rax
+    PUSH 0
+    JE sq_a_is_0
+
+    PUSH rcx
+    PUSH 0
+    JE sq_c_is_0
+
+    PUSH rbx
+    PUSH 0
+    JE sq_b_is_0
+
+    PUSH rbx
+    PUSH rbx
+    MUL
+    PUSH 4
+    PUSH rax
+    PUSH rcx
+    MUL
+    MUL
+    SUB
+    POP rdx
+
+    PUSH rdx
+    PUSH 0
+    JB sq_no_roots
+
+    PUSH rdx
+    PUSH 0
+    JE sq_D_is_0
+
+    PUSH rdx
+    SQRT
+    PUSH 2
+    PUSH rax
+    MUL
+    DIV
+    POP rdx
+
+    PUSH rbx
+    PUSH -1
+    MUL
+    PUSH 2
+    PUSH rax
+    MUL
+    DIV
+    POP rbx
+
+    PUSH rbx
+    PUSH rdx
+    SUB
+
+    PUSH rbx
+    PUSH rdx
+    ADD
+
+    PUSH 2
+    RET
+
+    sq_a_is_0:
+        PUSH rbx
+        PUSH rcx
+        CALL solve_linear
+        RET 
+
+    sq_c_is_0:
+        PUSH rbx
+        PUSH 0
+        JE sq_cb_is_0
+
+        PUSH 0
+        PUSH rax
+        PUSH rbx
+        CALL solve_linear
+        POP rdx
+
+        PUSH 2
+        RET
+
+        sq_cb_is_0:
+            PUSH 0
+            PUSH 1
+            RET
+
+    sq_b_is_0:
+        PUSH rcx
+        PUSH rax
+        DIV
+        PUSH -1
+        MUL
+        POP rax
+
+        PUSH rax
+        PUSH 0
+        JB sq_no_roots
+
+        PUSH rax
+        SQRT
+        POP rax
+        PUSH rax
+        PUSH rax
+        PUSH -1
+        MUL
+        PUSH 2
+        RET
+
+    sq_D_is_0:
+        PUSH rbx
+        PUSH -1
+        MUL
+        PUSH 2
+        PUSH rax
+        MUL
+        DIV
+        PUSH 1
+        RET
+        
+    sq_no_roots:
+        PUSH 0
+        RET
+
+
+solve_linear:
+    POP rbx
+    POP rax
+
+    PUSH rax
+    PUSH 0
+    JE lin_a_is_0
+
+    PUSH rbx
+    PUSH -1 
+    MUL
+    PUSH rax
+    DIV
+
+    PUSH 1
+    RET
+
+    lin_a_is_0:
+        PUSH rbx
+        PUSH 0
+        JE lin_inf_roots
+        PUSH 0
+        RET
+
+        lin_inf_roots:
+            PUSH -1
+            RET
