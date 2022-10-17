@@ -429,7 +429,7 @@ int WriteCmds (const char *output_file_name, cmd_t *cmds)
     FILE *out_file = fopen (output_file_name, "wb");
     if (out_file == nullptr) return FOPEN_ERROR;
 
-    if (fwrite ((void *) cmds, CMD_SIZE, cmds [2] + CODE_SHIFT, out_file) != cmds [2] + CODE_SHIFT) return FWRITE_ERROR;
+    if (fwrite ((void *) cmds, CMD_SIZE, cmds [2] + CODE_SHIFT, out_file) != (size_t) (cmds [2] + CODE_SHIFT)) return FWRITE_ERROR;
 
     fclose (out_file);
 

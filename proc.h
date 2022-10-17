@@ -22,11 +22,11 @@ const int SIGNATURE = 0x54ABC228;
 const size_t BUFLEN = 128;
 const size_t MAX_LABEL_LEN = 20;
 
-const size_t NUM_OF_ASM = 2;
+const int NUM_OF_ASM = 2;
 
 const size_t MAX_NUM_OF_ARGS = 2;
-const size_t  ARG_SIZE = sizeof (arg_t);
-const size_t  CMD_SIZE = sizeof (cmd_t);
+const size_t ARG_SIZE = sizeof (arg_t);
+const size_t CMD_SIZE = sizeof (cmd_t);
 
 const int CODE_SHIFT = 4;
 const size_t INFO_SIZE = sizeof (cmd_t) * CODE_SHIFT;
@@ -36,8 +36,8 @@ FILE *ERROR_STREAM = stdout;
 
 const int CMD_MASK = 0x000000FF;
 
-const size_t NUM_OF_REGS = 5;
-const size_t RAM_SIZE = 100;
+const int NUM_OF_REGS = 5;
+const int RAM_SIZE = 100;
 
 const size_t WIDTH  = 10;
 const size_t HEIGHT = 10;
@@ -61,7 +61,7 @@ struct Cpu_t
 {
     int ip;
     cmd_t *code;
-    size_t code_size;
+    int code_size;
 
     Stack_t      stk;
     Stack_t call_stk;
@@ -152,6 +152,8 @@ int AddLabel (char *cmd, Label_list_t *label_list, int ip, size_t line);
 int CheckLabelName (char **name_p, Label_list_t *label_list, size_t line);
 
 int ExpandLabelList (Label_list_t *label_list);
+
+int GetLabelIp (char *name, Label_list_t *label_list);
 
 int WriteCmds (const char *output_file_name, cmd_t *cmds);
 
