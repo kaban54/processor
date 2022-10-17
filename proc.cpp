@@ -179,6 +179,7 @@ int PrintMem (Cpu_t *cpu)
             {
                 char symb = cpu -> ram [y * WIDTH + x] ? '#' : '.';
                 for (size_t pix_x = 0; pix_x < PIXEL_WIDTH; pix_x++) putchar (symb);
+                putchar (' ');
             }
             putchar ('\n');
         }
