@@ -63,7 +63,6 @@ size_t GetSize (FILE *inp_file)
     return stat_buf.st_size;
 }
 
-
 int InfoCheck (Cpu_t *cpu)
 {
     if (cpu == nullptr) return NULLPTR_ARG;
@@ -158,6 +157,7 @@ void FreeCpu (Cpu_t *cpu)
     memset ((void *) (cpu -> regs), 0, sizeof (cpu -> regs [0]) * NUM_OF_REGS);
     memset ((void *) (cpu -> ram ), 0, sizeof (cpu -> ram  [0]) * RAM_SIZE);
 }
+
 
 int PrintMem (Cpu_t *cpu)
 {
@@ -255,4 +255,22 @@ void PrintRegs (Cpu_t *cpu, FILE *stream)
 
     for (size_t reg = 1; reg < NUM_OF_REGS; reg++)
         fprintf (stream, "    r%cx = %d\n", 'a' - 1 + reg, cpu -> regs [reg]);
+}
+
+
+int MondayToday (void)
+{
+    struct tm monday = {};
+    monday.tm_year = 122;
+    monday.tm_mon = 9;
+    monday.tm_mday = 17;
+    monday.tm_hour = 4;
+    monday.tm_sec = 1;
+    // 17.10.2022 03:00:01 AM (monday)
+
+    int difdays = (time (NULL) - mktime (&monday)) / SECS_IN_DAY;
+
+    if (difdays % 7 == 0) return 1;
+
+    return 0;
 }

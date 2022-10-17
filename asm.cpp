@@ -148,7 +148,6 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
     label_list.list = (Label_t *) calloc (label_list.max_num, sizeof (Label_t));
     if (label_list.list == nullptr) return ALLOC_ERROR;
     
-
     for (int loop = 0; loop < NUM_OF_ASM; loop++)
     {
         int ip = 0;
@@ -233,7 +232,6 @@ int AddLabel (char *cmd, Label_list_t *label_list, int ip, size_t line)
 
     return OK;
 }
-
 
 int CheckLabelName (char **name_p, Label_list_t *label_list, size_t line)
 {
@@ -437,6 +435,7 @@ int WriteCmds (const char *output_file_name, cmd_t *cmds)
 
     return OK;
 }
+
 
 void AsmErr (int err, FILE *stream)
 {

@@ -12,10 +12,11 @@ typedef arg_t Elem_t;
 #include <string.h>
 #include <sys/stat.h>
 #include <math.h>
+#include <time.h>
 #include "stack.h"
 
 
-const int VERSION = 14;
+const int VERSION = 15;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -45,6 +46,8 @@ const size_t PIXEL_HEIGTH = 3;
 
 const size_t      STACK_BASE_CAPACITY = 16;
 const size_t CALL_STACK_BASE_CAPACITY =  8;
+
+const int SECS_IN_DAY = 24 * 60 * 60;
 
 struct Text
 {
@@ -183,6 +186,7 @@ void PrintRegs (Cpu_t *cpu, FILE *stream);
 
 int PrintMem (Cpu_t *cpu);
 
+int MondayToday (void);
 //---------------------------------------------------------------------------------------------------------------------
 
 #endif

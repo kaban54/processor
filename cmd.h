@@ -168,7 +168,7 @@ DEF_CMD (name, num, 1,                                      \
     err |= GetArgs (cpu, cmd, &arg);                        \
     if (err) return err;                                    \
                                                             \
-    arg = arg / cpu -> accuracy_coef;                              \
+    arg = arg / cpu -> accuracy_coef;                       \
                                                             \
     if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;   \
                                                             \
@@ -230,4 +230,18 @@ DEF_CMD (SQRT, 19, 0,
 
     StackPush (&(cpu -> stk),  x);
 
+})
+
+DEF_CMD (JMON, 20, 1,
+{    
+    arg_t arg = 0;
+
+    int err = GetArgs (cpu, cmd, &arg);
+    if (err) return err;
+
+    arg = arg / cpu -> accuracy_coef;
+
+    if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;
+    
+    if (MondayToday()) cpu -> ip = arg;
 })
