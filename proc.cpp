@@ -41,8 +41,8 @@ int CpuCtor (Cpu_t *cpu)
     StackCtor (&(cpu -> call_stk), CALL_STACK_BASE_CAPACITY);
     StackCtor (&(cpu ->      stk),      STACK_BASE_CAPACITY);
 
-    memset (cpu -> regs, 0, NUM_OF_REGS * ARG_SIZE);
-    memset (cpu -> ram,  0, RAM_SIZE    * ARG_SIZE);
+    memset (cpu -> regs, 0, sizeof (cpu -> regs [0]) * NUM_OF_REGS);
+    memset (cpu -> ram , 0, sizeof (cpu -> ram  [0]) * RAM_SIZE);
     
     cpu -> ip = 0;
     cpu -> accuracy_coef = 1;
@@ -169,7 +169,8 @@ void FreeCpu (Cpu_t *cpu)
     cpu -> ip = 0;
     cpu -> code_size = 0;
 
-    StackDtor (&(cpu -> stk));
+    StackDtor (&(cpu ->      stk));
+    StackDtor (&(cpu -> call_stk));
 
     memset ((void *) (cpu -> regs), 0, sizeof (cpu -> regs [0]) * NUM_OF_REGS);
     memset ((void *) (cpu -> ram ), 0, sizeof (cpu -> ram  [0]) * RAM_SIZE);
