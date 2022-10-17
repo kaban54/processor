@@ -159,7 +159,35 @@ void FreeCpu (Cpu_t *cpu)
     memset ((void *) (cpu -> ram ), 0, sizeof (cpu -> ram  [0]) * RAM_SIZE);
 }
 
+int PrintMem (Cpu_t *cpu)
+{
+    if (cpu == nullptr) return NULLPTR_ARG;
+    
+    printf ("\n\n");
 
+    if (WIDTH * HEIGHT > RAM_SIZE)
+    {
+        printf ("WIDTH * HEIGHT > MEMORY SIZE.\n");
+        return OK;
+    }
+
+    for (size_t y = 0; y < HEIGHT; y++)
+    {
+        for (size_t pix_y = 0; pix_y < PIXEL_HEIGTH; pix_y++)
+        {
+            for (size_t x = 0; x < WIDTH; x++)
+            {
+                char symb = cpu -> ram [y * WIDTH + x] ? '#' : '.';
+                for (size_t pix_x = 0; pix_x < PIXEL_WIDTH; pix_x++) putchar (symb);
+            }
+            putchar ('\n');
+        }
+    }
+
+    printf ("\n\n");
+
+    return OK;
+}
 
 int PrintArg (arg_t arg, int accuracy_coef)
 {

@@ -158,7 +158,7 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
             if (line == 0)
             {
                 int accuracy_coef = 0;
-                
+
                 if (sscanf (txt -> lines [line], "%d", &accuracy_coef) == 0)
                 {
                     fprintf (ERROR_STREAM, "Compilation error:\nfirst line has to contain accuracy coefficient.\n");
@@ -171,9 +171,13 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
             }
 
             int symbs_read = 0;
+
+            char line_cpy [BUFLEN] = "";
             char cmd [BUFLEN] = "";
 
-            sscanf (txt -> lines [line], "%s%n", cmd, &symbs_read);
+            strncpy (line_cpy, txt -> lines [line], BUFLEN);
+
+            sscanf (line_cpy, "%s%n", cmd, &symbs_read);
 
             if (stricmp (cmd, "") == 0) continue;
 
@@ -182,7 +186,7 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
     if (stricmp (cmd, #name) == 0)                                                                                      \
     {                                                                                                                   \
         cmds [ip++] |= CMD_##name;                                                                                      \
-        if (arg) if (PutArgs (txt -> lines [line] + symbs_read, cmds, &ip, &label_list, line, loop)) return COMP_ERROR; \
+        if (arg) if (PutArgs (line_cpy + symbs_read, cmds, &ip, &label_list, line, loop)) return COMP_ERROR; \
     }                                                                                                                   \
     else   
         
@@ -324,6 +328,7 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t 
     {
         if (strchr (args, ']') != args + len - 1 || strchr (args + 1, '['))
         {
+            printf ("(%s)\n", args);
             fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
             return COMP_ERROR;
         }

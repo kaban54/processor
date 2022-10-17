@@ -15,7 +15,7 @@ typedef arg_t Elem_t;
 #include "stack.h"
 
 
-const int VERSION = 13;
+const int VERSION = 14;
 const int SIGNATURE = 0x54ABC228;
 
 const size_t BUFLEN = 128;
@@ -37,6 +37,11 @@ const int CMD_MASK = 0x000000FF;
 
 const size_t NUM_OF_REGS = 5;
 const size_t RAM_SIZE = 100;
+
+const size_t WIDTH  = 10;
+const size_t HEIGHT = 10;
+const size_t PIXEL_WIDTH  = 5;
+const size_t PIXEL_HEIGTH = 3;
 
 const size_t      STACK_BASE_CAPACITY = 16;
 const size_t CALL_STACK_BASE_CAPACITY =  8;
@@ -175,6 +180,9 @@ void CpuErr (Cpu_t *cpu, int err, FILE *stream);
 void PrintCode (Cpu_t *cpu, FILE *stream);
 
 void PrintRegs (Cpu_t *cpu, FILE *stream);
+
+int PrintMem (Cpu_t *cpu);
+
 //---------------------------------------------------------------------------------------------------------------------
 
 #endif

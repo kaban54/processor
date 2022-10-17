@@ -45,6 +45,8 @@ DEF_CMD (POP, 2, 1,
     }   
 
     if ( StackPop (&(cpu -> stk), val_ptr) ) return EMPTY_STACK;
+
+    if (cmd & ARG_MEM) PrintMem (cpu);
 })
 
 DEF_CMD (IN, 3, 0,

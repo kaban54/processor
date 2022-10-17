@@ -1,0 +1,72 @@
+1
+
+PUSH 2500
+POP rcx
+PUSH 0
+POP rax
+PUSH 0
+POP rbx
+
+loop:
+    PUSH rax
+    PUSH 10
+    MUL
+    PUSH 45
+    SUB
+    PUSH rax
+    PUSH 10
+    MUL
+    PUSH 45
+    SUB
+    MUL
+
+    PUSH rbx
+    PUSH 10
+    MUL
+    PUSH 45
+    SUB
+    PUSH rbx
+    PUSH 10
+    MUL
+    PUSH 45
+    SUB
+    MUL
+
+    ADD
+    PUSH rcx
+    JA not_draw
+
+    PUSH rax
+    PUSH rbx
+    PUSH 10
+    MUL
+    ADD
+    POP rdx
+    PUSH 1
+    POP [rdx]
+
+    not_draw:
+
+    PUSH rax+1
+    PUSH 10
+
+    JAE inc_y
+
+    PUSH rax+1
+    POP rax
+    JMP loop
+
+    inc_y:
+
+    PUSH rbx+1
+    PUSH 10
+    JAE break
+    
+    PUSH rbx+1
+    POP rbx
+    PUSH 0
+    POP rax
+    JMP loop
+
+break:
+HLT
