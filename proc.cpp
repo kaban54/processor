@@ -20,6 +20,8 @@ int main (int argc, char *argv[])
     struct Cpu_t cpu = {};
     int err = OK;
 
+    Ret_if_err (CpuCtor (&cpu));
+
     Ret_if_err (ReadCode (input_file_name, &cpu));
 
     Ret_if_err (InfoCheck (&cpu));
@@ -31,6 +33,25 @@ int main (int argc, char *argv[])
     return OK;
 }
 
+
+int CpuCtor (Cpu_t *cpu)
+{
+    if (cpu == nullptr) return NULLPTR_ARG;
+
+    StackCtor (&(cpu -> call_stk), CALL_STACK_BASE_CAPACITY);
+    StackCtor (&(cpu ->      stk),      STACK_BASE_CAPACITY);
+
+    memset (cpu -> regs, 0, NUM_OF_REGS * ARG_SIZE);
+    memset (cpu -> ram,  0, RAM_SIZE    * ARG_SIZE);
+    
+    cpu -> ip = 0;
+    cpu -> accuracy_coef = 1;
+
+    cpu -> code_size = 0;
+    cpu -> code = nullptr;
+
+    return OK;
+}
 
 int ReadCode (const char *input_file_name, Cpu_t *cpu)
 {
@@ -80,10 +101,6 @@ int RunCode (Cpu_t *cpu)
     if (cpu         == nullptr) return NULLPTR_ARG;
     if (cpu -> code == nullptr) return NULLPTR_ARG;
 
-    StackCtor (&(cpu -> call_stk), CALL_STACK_BASE_CAPACITY);
-    StackCtor (&(cpu ->      stk),      STACK_BASE_CAPACITY);
-
-    cpu -> ip = 0;
     cpu -> accuracy_coef = cpu -> code [-CODE_SHIFT + 3];
 
     while (1)
