@@ -1,4 +1,4 @@
-1
+#ACCURACY 1
 
 PUSH 2500
 POP rcx

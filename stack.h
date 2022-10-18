@@ -123,7 +123,7 @@ enum STACKERRORS
 
 enum STACKSTATUS
 {
-    NEW            = 0, 
+    CREATED            = 0, 
     CONSTRUCTED    = 1, 
     DECONSTRUCTED  = 2,
 };

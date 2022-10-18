@@ -186,7 +186,10 @@ DEF_JMP (JBE, 14, <=)
 DEF_JMP (JE , 15, ==)
 
 DEF_JMP (JNE, 16, !=)
-
+/*
+DEF_NONARITHM_JMP (JMP, 17, 1)
+DEF_NONARITHM_JMP (JMP, 17, 1)
+*/
 #undef DEF_JMP
 
 

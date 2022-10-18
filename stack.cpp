@@ -7,7 +7,7 @@ int StackConstructor (struct Stack_t *stk, size_t capacity, const char *name, co
 {
     if (stk == nullptr) return ACCESS_ERROR;
 
-    if (stk -> status != NEW)
+    if (stk -> status != CREATED)
     {
         stk -> error = STATUS_ERROR;
         Dump (stk, LOG_FILE_NAME);
@@ -161,7 +161,7 @@ int StackError (struct Stack_t *stk)
 {
     if (stk == NULL) return ACCESS_ERROR;
 
-    if (stk -> status != CONSTRUCTED && stk -> status != NEW)
+    if (stk -> status != CONSTRUCTED && stk -> status != CREATED)
     {
         stk -> error |=     STATUS_ERROR;
         return stk -> error;
@@ -231,7 +231,7 @@ void StackDump (struct Stack_t *stk, const char *filename, const char *func_name
 
     if (stk -> error & STATUS_ERROR)
     {
-        if      (stk -> status == NEW)
+        if      (stk -> status == CREATED)
             fprintf (log, "\tSTATUS ERROR (STACK HAS NOT BEEN CONSTRUCTED)\n\n");
         else if (stk -> status == DECONSTRUCTED)
             fprintf (log, "\tSTATUS ERROR (STACK HAS BEEN DECONSTRUCTED)\n\n");

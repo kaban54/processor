@@ -14,7 +14,7 @@ typedef arg_t Elem_t;
 #include <math.h>
 #include <time.h>
 #include "stack.h"
-
+#include "txtfuncs.h"
 
 const int VERSION = 15;
 const int SIGNATURE = 0x54ABC228;
@@ -49,13 +49,7 @@ const size_t CALL_STACK_BASE_CAPACITY =  8;
 
 const int SECS_IN_DAY = 24 * 60 * 60;
 
-struct Text
-{
-    size_t    len;
-    size_t buflen;
-    char  *buffer; 
-    char  **lines;
-};
+const char ACCURACY_CMD_NAME [] = "#ACCURACY";
 
 struct Cpu_t
 {
@@ -93,6 +87,10 @@ enum REGISTERS
     RDX = 4,
 };
 
+
+#ifndef ENUM_ERRORS
+#define ENUM_ERRORS
+
 enum ERRORS
 {
     OK                   =  0,
@@ -115,6 +113,7 @@ enum ERRORS
     SQRT_OF_NEG          = 17,
 };
 
+#endif
 
 #define DEF_CMD(name, num, arg, ...) CMD_##name = num,
 
@@ -135,17 +134,13 @@ enum ARG_TYPES
 
 // asm funcs ----------------------------------------------------------------------------------------------------------
 
-int ReadText (const char *input_file_name, struct Text *txt);
-
-size_t GetSize (FILE *inp_file);
-
-size_t CharReplace (char *str, char ch1, char ch2);
-
-void FreeText (struct Text *txt);
-
-int SetLines (struct Text *txt);
-
 int Compile (struct Text *txt, cmd_t **cmds_p);
+
+int Assemble (Text *txt, cmd_t *cmds, Label_list_t *label_list, int pass);
+
+int SetAccuracyCoef (cmd_t *cmds, char *line);
+
+int LabelListCtor (Label_list_t *label_list);
 
 int AddLabel (char *cmd, Label_list_t *label_list, int ip, size_t line);
 

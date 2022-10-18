@@ -42,84 +42,6 @@ int main (int argc, char *argv[])
 
 //---------------------------------------------------------------------------------------------------------------------
 
-int ReadText (const char *input_file_name, struct Text *txt)
-{    
-    if (input_file_name == nullptr) return NULLPTR_ARG;
-    if             (txt == nullptr) return NULLPTR_ARG;
-
-    FILE *inp_file = fopen (input_file_name, "r");
-    if (inp_file == nullptr) return FOPEN_ERROR;
-
-    size_t filesize = GetSize (inp_file);
-
-    txt -> buffer = (char *) calloc (filesize + 1, sizeof((txt -> buffer)[0]));
-    if ((txt -> buffer) == nullptr) return ALLOC_ERROR;
-
-    txt -> buflen = fread (txt -> buffer, sizeof((txt -> buffer)[0]), filesize, inp_file);
-    *(txt -> buffer + txt -> buflen) = '\0';
-    
-    fclose (inp_file);
-
-    txt -> len = CharReplace (txt -> buffer, '\n', '\0') + 1;
-
-    SetLines (txt);
-
-    return OK;
-}
-
-size_t CharReplace (char *str, char ch1, char ch2)
-{
-    if (str == nullptr) return 0;
-
-    size_t count = 0;
-    str = strchr (str, ch1);
-
-    while (str != nullptr)
-    {
-        count++;
-        *str = ch2;
-        str = strchr (str + 1, ch1);
-    }
-
-    return count;
-}
-
-size_t GetSize (FILE *inp_file)
-{
-    if (inp_file == nullptr) return 0;
-    struct stat stat_buf = {};
-
-    fstat (fileno (inp_file), &stat_buf);
-    return stat_buf.st_size;
-}
-
-int SetLines (struct Text *txt)
-{
-    if (txt           == nullptr) return NULLPTR_ARG;
-    if (txt -> buffer == nullptr) return NULLPTR_ARG;
-
-    txt -> lines = (char **) calloc (txt -> len, sizeof ((txt -> lines)[0]));
-    if ((txt -> lines) == nullptr) return ALLOC_ERROR;
-
-    char *str_ptr = txt -> buffer;
-
-    for (size_t index = 0; index < txt -> len; index++)
-    {
-        txt -> lines [index] = str_ptr;
-        str_ptr += strlen (str_ptr) + 1;
-    }
-
-    return OK;
-}
-
-void FreeText (struct Text *txt)
-{
-    free (txt -> buffer);
-    free (txt ->  lines);
-}
-
-//---------------------------------------------------------------------------------------------------------------------
-
 int Compile (struct Text *txt, cmd_t **cmds_p)
 {
     if (txt           == nullptr) return NULLPTR_ARG;
@@ -130,9 +52,7 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
     size_t size = (MAX_NUM_OF_ARGS * ARG_SIZE + CMD_SIZE) * (txt -> len) + INFO_SIZE;
 
     *cmds_p = (cmd_t *) (calloc (1, size));
-
     cmd_t *cmds = *cmds_p;
-
     if (cmds == nullptr) return ALLOC_ERROR;
 
     cmds [0] = SIGNATURE;
@@ -141,52 +61,48 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
     cmds += CODE_SHIFT;
 
     Label_list_t label_list = {};
-
-    label_list.max_num = 32;
-    label_list.    num =  0;
-
-    label_list.list = (Label_t *) calloc (label_list.max_num, sizeof (Label_t));
-    if (label_list.list == nullptr) return ALLOC_ERROR;
+    int err = LabelListCtor (&label_list);
+    if (err) return err;
     
-    for (int loop = 0; loop < NUM_OF_ASM; loop++)
+    for (int pass = 0; pass < NUM_OF_ASM; pass++)
     {
-        int ip = 0;
+        err = Assemble (txt, cmds, &label_list, pass);
+        if (err) return err;
+    }
 
-        for (size_t line = 0; line < txt -> len; line++)
-        {
-            if (line == 0)
-            {
-                int accuracy_coef = 0;
+    return OK;
+}
 
-                if (sscanf (txt -> lines [line], "%d", &accuracy_coef) == 0)
-                {
-                    fprintf (ERROR_STREAM, "Compilation error:\nfirst line has to contain accuracy coefficient.\n");
-                    return COMP_ERROR;
-                }
+int Assemble (Text *txt, cmd_t *cmds, Label_list_t *label_list, int pass)
+{
+    int ip = 0;
 
-                cmds [-CODE_SHIFT + 3] = accuracy_coef;
+    for (size_t line = 0; line < txt -> len; line++)
+    {
+        if (line == 0)
+        {   
+            if (SetAccuracyCoef (cmds, txt -> lines [line])) return COMP_ERROR;
+            continue;
+        }
 
-                continue;
-            }
+        int symbs_read = 0;
 
-            int symbs_read = 0;
+        char line_cpy [BUFLEN] = "";
+        char cmd      [BUFLEN] = "";
 
-            char line_cpy [BUFLEN] = "";
-            char cmd [BUFLEN] = "";
+        strncpy (line_cpy, txt -> lines [line], BUFLEN);
+        
+        sscanf (line_cpy, "%s%n", cmd, &symbs_read);
 
-            strncpy (line_cpy, txt -> lines [line], BUFLEN);
-
-            sscanf (line_cpy, "%s%n", cmd, &symbs_read);
-
-            if (stricmp (cmd, "") == 0) continue;
+        if (stricmp (cmd, "") == 0) continue;
 
 
-#define DEF_CMD(name, num, arg, ...)                                                                                    \
-    if (stricmp (cmd, #name) == 0)                                                                                      \
-    {                                                                                                                   \
-        cmds [ip++] |= CMD_##name;                                                                                      \
-        if (arg) if (PutArgs (line_cpy + symbs_read, cmds, &ip, &label_list, line, loop)) return COMP_ERROR; \
-    }                                                                                                                   \
+#define DEF_CMD(name, num, arg, ...)                                                                         \
+    if (stricmp (cmd, #name) == 0)                                                                           \
+    {                                                                                                        \
+        cmds [ip++] |= CMD_##name;                                                                           \
+        if (arg) if (PutArgs (line_cpy + symbs_read, cmds, &ip, label_list, line, pass)) return COMP_ERROR; \
+    }                                                                                                        \
     else   
         
         #include "cmd.h"
@@ -194,26 +110,59 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
 #undef DEF_CMD
 
 
-            /* else */ if (strchr (cmd, ':'))
-            {   
-                if (loop >= 1) continue;
-                if (AddLabel (cmd, &label_list, ip, line)) return COMP_ERROR;
-            }
-
-            else
-            {
-                fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
-                return COMP_ERROR;
-            }
+        /* else */ if (strchr (cmd, ':'))
+        {   
+            if (pass >= 1) continue;
+            if (AddLabel (cmd, label_list, ip, line)) return COMP_ERROR;
         }
-
-        cmds [-CODE_SHIFT + 2] = ip;
+        else
+        {
+            fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
+            return COMP_ERROR;
+        }
     }
+
+    cmds [-CODE_SHIFT + 2] = ip;  // Support for EMSL opcode (Entire Memory Shift Left, see Knappy Opcodes)
+
+    return OK;
+}
+
+int SetAccuracyCoef (cmd_t *cmds, char *line)
+{
+    if (cmds == nullptr) return NULLPTR_ARG;
+    if (line == nullptr) return NULLPTR_ARG;
+
+    int accuracy_coef = 0;
+    int symbs_read = 0;
+
+    char cmd [BUFLEN] = "";
+    sscanf (line, "%s%n", cmd, &symbs_read);
+ 
+    if (stricmp (cmd, ACCURACY_CMD_NAME) || sscanf (line + symbs_read, "%d", &accuracy_coef) == 0)
+    {
+        fprintf (ERROR_STREAM, "Compilation error:\nfirst line has to contain accuracy coefficient.\n");
+        return COMP_ERROR;
+    }
+
+    cmds [-CODE_SHIFT + 3] = accuracy_coef;
 
     return OK;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
+
+int LabelListCtor (Label_list_t *label_list)
+{
+    if (label_list == nullptr) return NULLPTR_ARG;
+
+    label_list -> max_num = 32;
+    label_list ->     num =  0;
+
+    label_list -> list = (Label_t *) calloc (label_list -> max_num, sizeof (Label_t));
+    if (label_list -> list == nullptr) return ALLOC_ERROR;
+
+    return OK;
+}
 
 int AddLabel (char *cmd, Label_list_t *label_list, int ip, size_t line)
 {
@@ -310,7 +259,7 @@ int GetLabelIp (char *name, Label_list_t *label_list)
 
 //----------------------------------------------------------------------------------------------------------------------
 
-int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t line, int loop)
+int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t line, int pass)
 {
     args = DeleteSpaces (args);
 
@@ -363,7 +312,7 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t 
         {
             cmds [*ip + 1] = GetLabelIp (arg2, label_list);
 
-            if (loop >= 2 && cmds [*ip + 1] == -1)
+            if (pass >= 2 && cmds [*ip + 1] == -1)
             {
                 fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
                 return COMP_ERROR;
@@ -390,7 +339,7 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t 
     {
         if (!got_im) cmds [(*ip)++] = GetLabelIp (arg1, label_list);
             
-        if (got_im || (loop >= 2 && cmds [*ip - 1] == -1))
+        if (got_im || (pass >= 2 && cmds [*ip - 1] == -1))
         {
             fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
             return COMP_ERROR;

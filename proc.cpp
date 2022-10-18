@@ -180,7 +180,7 @@ void FreeCpu (Cpu_t *cpu)
 int PrintMem (Cpu_t *cpu)
 {
     if (cpu == nullptr) return NULLPTR_ARG;
-    
+
     printf ("\n\n");
 
     if (WIDTH * HEIGHT > RAM_SIZE)

@@ -1,4 +1,4 @@
-1000
+#ACCURACY 1000
 
 IN
 IN
