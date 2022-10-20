@@ -15,36 +15,12 @@ DEF_CMD (PUSH, 1, 1,
 
 DEF_CMD (POP, 2, 1,
 {
-    if (cmd & ARG_IM && !(cmd & ARG_MEM)) return INCORRECT_ARG_TYPE;
-                
     arg_t *val_ptr = nullptr;
-                
-    if (cmd & ARG_MEM)
-    {   
-        arg_t arg = 0;
 
-        if (cmd & ARG_REG)
-        {
-            int reg = cpu -> code [(cpu -> ip)++];
-            if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
-            arg += (cpu -> regs [reg]) / cpu -> accuracy_coef;
-        }
+    int err = GetArgAdress (cpu, cmd, &val_ptr);
+    if (err) return err;
 
-        if (cmd & ARG_IM ) arg += cpu -> code [(cpu -> ip)++];
-
-        if (arg >= RAM_SIZE) return INCORRECT_RAM_ADRESS;
-
-        val_ptr = (cpu -> ram + arg);
-    }
-    else
-    {
-        int reg = cpu -> code [(cpu -> ip)++];
-        if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
-                    
-        val_ptr = cpu -> regs + reg;
-    }   
-
-    if ( StackPop (&(cpu -> stk), val_ptr) ) return EMPTY_STACK;
+    if (StackPop (&(cpu -> stk), val_ptr) ) return EMPTY_STACK;
 
     if (cmd & ARG_MEM) PrintMem (cpu);
 })
@@ -132,19 +108,28 @@ DEF_CMD (DUMP, 9, 0,
     printf ("\n");
 })
 
-DEF_CMD (JMP, 10, 1,
-{
-    arg_t arg = 0;
 
-    int err = GetArgs (cpu, cmd, &arg);
-    if (err) return err;
+#define DEF_NONARITHM_JMP(name, num, cond)                  \
+DEF_CMD (name, num, 1,                                      \
+{                                                           \
+    arg_t arg = 0;                                          \
+                                                            \
+    int err = GetArgs (cpu, cmd, &arg);                     \
+    if (err) return err;                                    \
+                                                            \
+    arg = arg / cpu -> accuracy_coef;                       \
+                                                            \
+    if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;   \
+                                                            \
+    if (cond) cpu -> ip = arg;                              \
+}) 
 
-    arg = arg / cpu -> accuracy_coef;
+DEF_NONARITHM_JMP (JMP, 10, 1)
 
-    if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;
+DEF_NONARITHM_JMP (JMON, 20, MondayToday())
 
-    cpu -> ip = arg;
-})
+#undef DEF_NONARITHM_JMP
+
 
 #define DEF_JMP(name, num ,op)                              \
 DEF_CMD (name, num, 1,                                      \
@@ -186,10 +171,7 @@ DEF_JMP (JBE, 14, <=)
 DEF_JMP (JE , 15, ==)
 
 DEF_JMP (JNE, 16, !=)
-/*
-DEF_NONARITHM_JMP (JMP, 17, 1)
-DEF_NONARITHM_JMP (JMP, 17, 1)
-*/
+
 #undef DEF_JMP
 
 
@@ -233,18 +215,4 @@ DEF_CMD (SQRT, 19, 0,
 
     StackPush (&(cpu -> stk),  x);
 
-})
-
-DEF_CMD (JMON, 20, 1,
-{    
-    arg_t arg = 0;
-
-    int err = GetArgs (cpu, cmd, &arg);
-    if (err) return err;
-
-    arg = arg / cpu -> accuracy_coef;
-
-    if (arg >= cpu -> code_size) return INCORRECT_JMP_IP;
-    
-    if (MondayToday()) cpu -> ip = arg;
 })

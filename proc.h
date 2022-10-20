@@ -6,6 +6,7 @@ typedef int    cmd_t;
 typedef arg_t Elem_t;
 
 
+#include <TXLib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -170,6 +171,8 @@ int InfoCheck (Cpu_t *cpu);
 int RunCode (Cpu_t *cpu);
 
 int GetArgs (Cpu_t *cpu, cmd_t cmd, arg_t *arg);
+
+int GetArgAdress (Cpu_t *cpu, cmd_t cmd, arg_t **val_ptr_p);
 
 void FreeCpu (Cpu_t *cpu);
 

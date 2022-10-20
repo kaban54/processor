@@ -159,6 +159,36 @@ int GetArgs (Cpu_t *cpu, cmd_t cmd, arg_t *arg_p)
     return OK;
 }
 
+int GetArgAdress (Cpu_t *cpu, cmd_t cmd, arg_t **val_ptr_p)
+{
+    if (cpu       == nullptr) return NULLPTR_ARG;
+    if (val_ptr_p == nullptr) return NULLPTR_ARG;
+
+    if (cmd & ARG_IM && !(cmd & ARG_MEM)) return INCORRECT_ARG_TYPE;
+                
+    arg_t *val_ptr = nullptr;
+
+    if (cmd & ARG_REG)
+    {
+        int reg = cpu -> code [(cpu -> ip)++];
+        if (reg <= 0 || reg >= NUM_OF_REGS) return INCORRECT_REG;
+        val_ptr = cpu -> regs + reg;
+    }
+
+    if (cmd & ARG_MEM)
+    {   
+        if (val_ptr == nullptr) val_ptr = cpu -> ram;
+        else                    val_ptr = cpu -> ram + *val_ptr / cpu -> accuracy_coef;
+
+        if (cmd & ARG_IM ) val_ptr += cpu -> code [(cpu -> ip)++];
+
+        if (val_ptr >= cpu -> ram + RAM_SIZE) return INCORRECT_RAM_ADRESS;
+    }
+
+    *val_ptr_p = val_ptr;
+    return OK;
+}
+
 
 void FreeCpu (Cpu_t *cpu)
 {
@@ -180,6 +210,8 @@ void FreeCpu (Cpu_t *cpu)
 int PrintMem (Cpu_t *cpu)
 {
     if (cpu == nullptr) return NULLPTR_ARG;
+
+    txSetConsoleCursorPos (0, 0);
 
     printf ("\n\n");
 
