@@ -55,10 +55,10 @@ int Compile (struct Text *txt, cmd_t **cmds_p)
     cmd_t *cmds = *cmds_p;
     if (cmds == nullptr) return ALLOC_ERROR;
 
-    cmds [0] = SIGNATURE;
-    cmds [1] = VERSION;
-
     cmds += CODE_SHIFT;
+
+    cmds [SIGNATURE_POS] = SIGNATURE;
+    cmds [  VERSION_POS] = VERSION;
 
     Label_list_t label_list = {};
     int err = LabelListCtor (&label_list);
@@ -96,12 +96,18 @@ int Assemble (Text *txt, cmd_t *cmds, Label_list_t *label_list, int pass)
 
         if (stricmp (cmd, "") == 0) continue;
 
+        if (strchr (cmd, ':'))
+        {   
+            if (pass >= 1) continue;
+            if (AddLabel (cmd, label_list, ip, line)) return COMP_ERROR;
+        }
+        else
 
 #define DEF_CMD(name, num, arg, ...)                                                                         \
     if (stricmp (cmd, #name) == 0)                                                                           \
     {                                                                                                        \
         cmds [ip++] |= CMD_##name;                                                                           \
-        if (arg) if (PutArgs (line_cpy + symbs_read, cmds, &ip, label_list, line, pass)) return COMP_ERROR; \
+        if (arg) if (PutArgs (line_cpy + symbs_read, cmds, &ip, label_list, line, pass)) return COMP_ERROR;  \
     }                                                                                                        \
     else   
         
@@ -109,20 +115,14 @@ int Assemble (Text *txt, cmd_t *cmds, Label_list_t *label_list, int pass)
 
 #undef DEF_CMD
 
-
-        /* else */ if (strchr (cmd, ':'))
-        {   
-            if (pass >= 1) continue;
-            if (AddLabel (cmd, label_list, ip, line)) return COMP_ERROR;
-        }
-        else
+        /* else */
         {
             fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
             return COMP_ERROR;
         }
     }
 
-    cmds [-CODE_SHIFT + 2] = ip;  // Support for EMSL opcode (Entire Memory Shift Left, see Knappy Opcodes)
+    cmds [CODESIZE_POS] = ip;  // Support for EMSL opcode (Entire Memory Shift Left, see Knappy Opcodes)
 
     return OK;
 }
@@ -144,7 +144,7 @@ int SetAccuracyCoef (cmd_t *cmds, char *line)
         return COMP_ERROR;
     }
 
-    cmds [-CODE_SHIFT + 3] = accuracy_coef;
+    cmds [ACCURACY_POS] = accuracy_coef;
 
     return OK;
 }
@@ -176,8 +176,8 @@ int AddLabel (char *cmd, Label_list_t *label_list, int ip, size_t line)
     err = ExpandLabelList (label_list);
     if (err) return err;
 
-    strcpy (((label_list -> list) [label_list -> num]).name, cmd);
-    ((label_list -> list) [label_list -> num++]).ip = ip;
+    strcpy (((label_list -> list) [label_list -> num  ]).name, cmd);
+            ((label_list -> list) [label_list -> num++]).ip = ip;
 
     return OK;
 }
@@ -252,7 +252,7 @@ int GetLabelIp (char *name, Label_list_t *label_list)
 
     for (size_t index = 0; index < label_list -> num; index++)
         if (strcmp ((label_list -> list [index]).name, name) == 0)
-            return (label_list -> list [index]).ip;
+            return  (label_list -> list [index]).ip;
     
     return -1;
 }

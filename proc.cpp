@@ -53,6 +53,7 @@ int CpuCtor (Cpu_t *cpu)
     return OK;
 }
 
+
 int ReadCode (const char *input_file_name, Cpu_t *cpu)
 {
     if (input_file_name == nullptr) return NULLPTR_ARG;
@@ -84,13 +85,14 @@ size_t GetSize (FILE *inp_file)
     return stat_buf.st_size;
 }
 
+
 int InfoCheck (Cpu_t *cpu)
 {
     if (cpu == nullptr) return NULLPTR_ARG;
 
-    if (cpu -> code [-CODE_SHIFT    ] != SIGNATURE)        return WRONG_SIGNATURE;
-    if (cpu -> code [-CODE_SHIFT + 1] != VERSION)          return WRONG_VERSION;
-    if (cpu -> code [-CODE_SHIFT + 2] != cpu -> code_size) return WRONG_CODESIZE;
+    if (cpu -> code [SIGNATURE_POS] != SIGNATURE)        return WRONG_SIGNATURE;
+    if (cpu -> code [  VERSION_POS] != VERSION)          return WRONG_VERSION;
+    if (cpu -> code [ CODESIZE_POS] != cpu -> code_size) return WRONG_CODESIZE;
     
     return OK;
 }
@@ -101,7 +103,7 @@ int RunCode (Cpu_t *cpu)
     if (cpu         == nullptr) return NULLPTR_ARG;
     if (cpu -> code == nullptr) return NULLPTR_ARG;
 
-    cpu -> accuracy_coef = cpu -> code [-CODE_SHIFT + 3];
+    cpu -> accuracy_coef = cpu -> code [ACCURACY_POS];
 
     while (1)
     {
@@ -128,7 +130,7 @@ int RunCode (Cpu_t *cpu)
 #undef DEF_CMD
 
     }
-
+    return OK;
 }
 
 int GetArgs (Cpu_t *cpu, cmd_t cmd, arg_t *arg_p)

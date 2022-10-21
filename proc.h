@@ -133,6 +133,14 @@ enum ARG_TYPES
     ARG_MEM = 0x400,
 };
 
+enum CODE_POSITIONS
+{
+    SIGNATURE_POS = -CODE_SHIFT,
+      VERSION_POS = -CODE_SHIFT + 1,
+     CODESIZE_POS = -CODE_SHIFT + 2,
+     ACCURACY_POS = -CODE_SHIFT + 3,
+};
+
 // asm funcs ----------------------------------------------------------------------------------------------------------
 
 int Compile (struct Text *txt, cmd_t **cmds_p);
