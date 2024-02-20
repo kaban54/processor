@@ -5,6 +5,9 @@ SRCDIR = src/
 
 all: asm proc run
 
+prepare:
+	mkdir obj
+
 asm: obj/asm.o obj/txtfuncs.o
 	$(CC) -o asm obj/asm.o obj/txtfuncs.o $(CFLAGS)
 
