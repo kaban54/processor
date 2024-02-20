@@ -5,12 +5,12 @@ int main (int argc, char *argv[])
 {
     for (int index = 1; index < argc; index++)
     {   
-        char cmd[100] = "asm.exe ";
+        char cmd[100] = "./asm ";
         strcat (cmd, argv[index]);
         strcat (cmd, " code");
 
         system (cmd);
-        system ("proc.exe code");
+        system ("./proc code");
     }
     return 0;
 }

@@ -19,7 +19,7 @@ int main (int argc, char *argv[])
     else            input_file_name = "in.txt";
 
     if (argc >= 3) output_file_name = argv [2];
-    else           output_file_name =      "a";
+    else           output_file_name = "asmout";
 
 
     cmd_t *commands = nullptr;
