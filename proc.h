@@ -6,7 +6,6 @@ typedef int    cmd_t;
 typedef arg_t Elem_t;
 
 
-#include <TXLib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

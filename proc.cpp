@@ -63,7 +63,7 @@ int ReadCode (const char *input_file_name, Cpu_t *cpu)
     if (inp_file == nullptr) return FOPEN_ERROR;
 
     size_t filesize = GetSize (inp_file);
-    cpu -> code_size = filesize / CMD_SIZE - CODE_SHIFT;
+    cpu -> code_size = (int)(filesize / CMD_SIZE - CODE_SHIFT);
 
     cpu -> code = (cmd_t *) calloc (1, filesize);
     if (cpu -> code == nullptr) return ALLOC_ERROR;
@@ -213,8 +213,6 @@ int PrintMem (Cpu_t *cpu)
 {
     if (cpu == nullptr) return NULLPTR_ARG;
 
-    txSetConsoleCursorPos (0, 0);
-
     printf ("\n\n");
 
     if (WIDTH * HEIGHT > RAM_SIZE)
@@ -306,7 +304,7 @@ void PrintRegs (Cpu_t *cpu, FILE *stream)
     fprintf (stream, "Registers:\n");
 
     for (size_t reg = 1; reg < NUM_OF_REGS; reg++)
-        fprintf (stream, "    r%cx = %d\n", 'a' - 1 + reg, cpu -> regs [reg]);
+        fprintf (stream, "    r%cx = %d\n", (char)('a' - 1 + reg), cpu -> regs [reg]);
 }
 
 
@@ -320,7 +318,7 @@ int MondayToday (void)
     monday.tm_sec = 1;
     // 17.10.2022 03:00:01 AM (monday)
 
-    int difdays = (time (NULL) - mktime (&monday)) / SECS_IN_DAY;
+    long difdays = (time (NULL) - mktime (&monday)) / SECS_IN_DAY;
 
     if (difdays % 7 == 0) return 1;
 

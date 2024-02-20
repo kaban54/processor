@@ -253,13 +253,13 @@ void StackDump (struct Stack_t *stk, const char *filename, const char *func_name
     }
 
     if (stk -> size == POISON_SIZE)             fprintf (log, "\tsize     = POISON"               );
-    else                                        fprintf (log, "\tsize     = %Iu", stk -> size      );
+    else                                        fprintf (log, "\tsize     = %Ilu", stk -> size      );
 
     if (stk -> error & SIZE_ERROR)              fprintf (log, " <-- SIZE ERROR");
     fprintf (log, "\n");
 
     if (stk -> size == POISON_SIZE)             fprintf (log, "\tcapacity = POISON\n"             );
-    else                                        fprintf (log, "\tcapacity = %Iu\n", stk -> capacity);
+    else                                        fprintf (log, "\tcapacity = %Ilu\n", stk -> capacity);
 
     if (stk -> error & ACCESS_ERROR)
     {
@@ -279,8 +279,8 @@ void StackDump (struct Stack_t *stk, const char *filename, const char *func_name
     for (size_t index = 0; index < stk -> capacity; index++)
     {
                                                 fprintf (log, index < stk -> size ? "\t\t*" : "\t\t ");
-        if (stk -> data [index] == POISON_ELEM) fprintf (log, "[%Iu] = POISON\n", index);
-        else                                    fprintf (log, "[%Iu] = %d\n", index, stk -> data [index]); // ??        
+        if (stk -> data [index] == POISON_ELEM) fprintf (log, "[%Ilu] = POISON\n", index);
+        else                                    fprintf (log, "[%Ilu] = %d\n", index, stk -> data [index]); // ??        
     }
 
                                                 fprintf (log, "\t}\n}\n\n");

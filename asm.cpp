@@ -94,7 +94,7 @@ int Assemble (Text *txt, cmd_t *cmds, Label_list_t *label_list, int pass)
         
         sscanf (line_cpy, "%s%n", cmd, &symbs_read);
 
-        if (stricmp (cmd, "") == 0) continue;
+        if (strcmp (cmd, "") == 0) continue;
 
         if (strchr (cmd, ':'))
         {   
@@ -104,7 +104,7 @@ int Assemble (Text *txt, cmd_t *cmds, Label_list_t *label_list, int pass)
         else
 
 #define DEF_CMD(name, num, arg, ...)                                                                         \
-    if (stricmp (cmd, #name) == 0)                                                                           \
+    if (strcmp (cmd, #name) == 0)                                                                            \
     {                                                                                                        \
         cmds [ip++] |= CMD_##name;                                                                           \
         if (arg) if (PutArgs (line_cpy + symbs_read, cmds, &ip, label_list, line, pass)) return COMP_ERROR;  \
@@ -117,7 +117,7 @@ int Assemble (Text *txt, cmd_t *cmds, Label_list_t *label_list, int pass)
 
         /* else */
         {
-            fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Iu):\n(%s)\n", line + 1, cmd);
+            fprintf (ERROR_STREAM, "Compilation error:\nunknown command at line (%Ilu):\n(%s)\n", line + 1, cmd);
             return COMP_ERROR;
         }
     }
@@ -138,7 +138,7 @@ int SetAccuracyCoef (cmd_t *cmds, char *line)
     char cmd [BUFLEN] = "";
     sscanf (line, "%s%n", cmd, &symbs_read);
  
-    if (stricmp (cmd, ACCURACY_CMD_NAME) || sscanf (line + symbs_read, "%d", &accuracy_coef) == 0)
+    if (strcmp (cmd, ACCURACY_CMD_NAME) || sscanf (line + symbs_read, "%d", &accuracy_coef) == 0)
     {
         fprintf (ERROR_STREAM, "Compilation error:\nfirst line has to contain accuracy coefficient.\n");
         return COMP_ERROR;
@@ -194,7 +194,7 @@ int CheckLabelName (char **name_p, Label_list_t *label_list, size_t line)
 
     if (name [len - 1] != ':')
     {
-        fprintf (ERROR_STREAM, "Compilation error:\nincorrect label format at line (%Iu).\n", line + 1);
+        fprintf (ERROR_STREAM, "Compilation error:\nincorrect label format at line (%Ilu).\n", line + 1);
         return COMP_ERROR;
     }
     name [len - 1] = '\0';
@@ -205,13 +205,13 @@ int CheckLabelName (char **name_p, Label_list_t *label_list, size_t line)
 
     if (strcmp (name, "") == 0 || isdigit (name [0]) || (len == 3 && name [0] == 'r' && name [2] == 'x'))
     {
-        fprintf (ERROR_STREAM, "Compilation error:\nincorrect label name at line (%Iu).\n", line + 1);
+        fprintf (ERROR_STREAM, "Compilation error:\nincorrect label name at line (%Ilu).\n", line + 1);
         return COMP_ERROR;
     }
 
     if (len >= MAX_LABEL_LEN)
     {
-        fprintf (ERROR_STREAM, "Compilation error:\nlabel name at line (%Iu) is too long.\n", line + 1);
+        fprintf (ERROR_STREAM, "Compilation error:\nlabel name at line (%Ilu) is too long.\n", line + 1);
         return COMP_ERROR;
     }
 
@@ -219,7 +219,7 @@ int CheckLabelName (char **name_p, Label_list_t *label_list, size_t line)
     {
         if (strcmp ((label_list -> list [index]).name, name) == 0)
         {
-            fprintf (ERROR_STREAM, "Compilation error at line (%Iu):\nlabel (%s) has been already created.\n", line + 1, name);
+            fprintf (ERROR_STREAM, "Compilation error at line (%Ilu):\nlabel (%s) has been already created.\n", line + 1, name);
             return COMP_ERROR;
         }
     }
@@ -265,7 +265,7 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t 
 
     if (*args == '\0')
     {
-        fprintf (ERROR_STREAM, "Compilation error:\nmissing argument at line (%Iu)\n", line + 1);
+        fprintf (ERROR_STREAM, "Compilation error:\nmissing argument at line (%Ilu)\n", line + 1);
         return COMP_ERROR;
     }
 
@@ -276,7 +276,7 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t 
         if (strchr (args, ']') != args + len - 1 || strchr (args + 1, '['))
         {
             printf ("(%s)\n", args);
-            fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
+            fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Ilu)\n", line + 1);
             return COMP_ERROR;
         }
 
@@ -314,7 +314,7 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t 
 
             if (pass >= 2 && cmds [*ip + 1] == -1)
             {
-                fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
+                fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Ilu)\n", line + 1);
                 return COMP_ERROR;
             }
 
@@ -341,7 +341,7 @@ int PutArgs (char *args, cmd_t *cmds, int *ip, Label_list_t *label_list, size_t 
             
         if (got_im || (pass >= 2 && cmds [*ip - 1] == -1))
         {
-            fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Iu)\n", line + 1);
+            fprintf (ERROR_STREAM, "Compilation error:\nincorrect argument format at line (%Ilu)\n", line + 1);
             return COMP_ERROR;
         }
 
